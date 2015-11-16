@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+             <RecomposeVAppParams
+                        xmlns="http://www.vmware.com/vcloud/v1.5"
+                        xmlns:ns2="http://schemas.dmtf.org/ovf/envelope/1"
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                        xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1"
+                        xmlns:environment_1="http://schemas.dmtf.org/ovf/environment/1">
+                        <Description> "api deployed vm to ol-vapp-04" </Description>
+                            <SourcedItem sourceDelete="false">
+                                <Source name="ludo" href="https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-4af381bb-f4d1-4784-8fc2-9f0db72411c9"/>
+                            </SourcedItem>
+                        <AllEULAsAccepted>true</AllEULAsAccepted>
+            </RecomposeVAppParams>
+

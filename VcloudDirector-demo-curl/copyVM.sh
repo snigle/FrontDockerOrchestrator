@@ -1,0 +1,1 @@
+curl -k -b loginCookie.txt -H "Accept:application/*+xml;version=1.5" -H "Content-Type:application/vnd.vmware.vcloud.recomposeVAppParams+xml" -X POST https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vapp-9dd013e3-3f51-4cde-a19c-f96b4ad2e350/action/recomposeVApp --data @createVM.xml

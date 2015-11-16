@@ -1,0 +1,1 @@
+curl -k -b loginCookie.txt -H "Accept:application/*+xml;version=1.5" -H "Content-Type:application/vnd.vmware.vcloud.task+xml" -X GET https://vcloud-director-http-2.ccr.eisti.fr/api/task/830df912-b45f-4342-a098-ed7249271d84
