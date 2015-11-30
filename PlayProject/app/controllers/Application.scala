@@ -3,17 +3,22 @@ package controllers
 import play.api.Play.current
 import play.api.libs.ws._
 import play.api.mvc._
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.util.Success
+import scala.util.Failure
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
 class Application extends Controller {
   var cookie : Seq[WSCookie] = Seq[WSCookie]()
 
   def index = Action.async {
     implicit request => {
-     getLogin.onComplete(x => cookie = x.get )
-      val vcloud_token = cookie.head.toString.split(";")(0).split("=")(1)
+     val cookie = Await.ready(getLogin, Duration.Inf).value.get match {
+       case Success(x) => x
+       case Failure(x) => Nil
+     }
       Future(Ok(cookie.head.toString))
     }
   }
