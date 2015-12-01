@@ -1,7 +1,19 @@
-@(message: String)
+@(vapp: Vapp)
 
-@main("Welcome to Play") {
 
-    @play20.welcome(message)
+@displayVm(vm : Vm) = {
+    <fieldset style="border-color:@if(vm.active){green}else{red}">
+    <legend>@vm.name (@vm.id)</legend>
+    <ul>
+    <li>Ip locale : @vm.ipLocal</li>
+    <li>Ip externe : @vm.ipExternal</li>
+    </ul>
+    </fieldset>
+}
 
+@main("Dashboad Docker Orchestrator VMWare") {
+    
+    <h1>Vapp - #@vapp.id</h1>
+
+    @vapp.vms.map(displayVm)
 }
