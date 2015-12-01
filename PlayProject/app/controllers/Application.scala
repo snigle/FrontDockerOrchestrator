@@ -10,6 +10,7 @@ import scala.util.Failure
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import javax.inject.Inject
+import models.Vapp
 
 class Application @Inject() (ws: WSClient) extends Controller {
   var cookie: Seq[WSCookie] = Seq[WSCookie]()
@@ -22,21 +23,25 @@ class Application @Inject() (ws: WSClient) extends Controller {
       }
   }
 
+  def reqXml = ws.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vapp-9dd013e3-3f51-4cde-a19c-f96b4ad2e350/").withHeaders(
+    "Cookie" -> getCookie,
+    "Accept" -> "application/*+xml;version=1.5").get()
+
   def dashboard = Action.async { implicit request =>
     {
-      //"Accept:application/*+xml;version=1.5" -X GET https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vapp-cb109e5b-e457-450e-aff9-322cdd6181f6/productSections
-      ws.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vapp-9dd013e3-3f51-4cde-a19c-f96b4ad2e350/").withHeaders(
-        "Cookie" -> getCookie,
-        "Accept" -> "application/*+xml;version=1.5").get().map(response => {
-          val ids = response.xml \ "Children" \ "Vm" 
-          println(ids.isEmpty)
-          println(ids.map(id=>id.attribute("id"))mkString("\n"))
-          Ok(response.xml)
-        })
-        
+      reqXml.map(response => {
+        val vapp = new Vapp(response.xml)
+        Ok(views.html.index(vapp))
+      })
+
     }
   }
 
+  def vappXml = Action.async { implicit request =>
+    {
+      reqXml.map(response => Ok(response.xml))
+    }
+  }
 
   def getCookie = {
     val req =
