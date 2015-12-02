@@ -32,6 +32,7 @@ class Application @Inject() (ws: WSClient) extends Controller {
     {
       reqXml.map(response => {
         val vapp = new Vapp(response.xml)
+        println(vapp)
         Ok(views.html.index(vapp))
       })
 
