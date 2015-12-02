@@ -5,6 +5,7 @@
 # Home page
 GET     /                           controllers.Application.index
 GET     /dashboard                  controllers.Application.dashboard
+GET     /copieVM                    controllers.Application.copieVM_action
 GET     /xml                        controllers.Application.vappXml
 
 # Map static resources from the /public folder to the /assets URL path

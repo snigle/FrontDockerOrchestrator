@@ -2,24 +2,34 @@ package controllers
 
 import javax.inject.Inject
 
+import actors.DeployActor
+import akka.actor.{ActorSystem, Props}
 import models.Vapp
 import play.api.Play.current
 import play.api.libs.ws._
 import play.api.mvc._
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
 
+
+
+
+
+
 class Application @Inject() (ws: WSClient) extends Controller {
 //  var cookie: Seq[WSCookie] = Seq[WSCookie]()
+   val system = ActorSystem("VM")
+   val vm_deploy_actor =  system.actorOf(Props(new DeployActor(reqXml)))
+
+
 
   def index = Action.async {
     implicit request =>
       {
         val cookie = getCookie
-        copieVM(cookie,"https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-bb168665-8203-4edc-9ff8-dab64e754620","tata")
         Future(Ok(cookie))
       }
   }
@@ -30,9 +40,18 @@ class Application @Inject() (ws: WSClient) extends Controller {
 
   def dashboard = Action.async { implicit request =>
     {
+
+      /* implicit val timeout = Timeout(Duration(60,SECONDS))
+       val result = Await.result(vm_deploy_actor ? VMDeployed("swarm-agent-" + (4)),timeout.duration).asInstanceOf[String]
+       println(result)*/
+
       reqXml.map(response => {
         val vapp = new Vapp(response.xml)
-        println(vapp)
+//        println(vapp)
+
+
+
+
         Ok(views.html.index(vapp))
       })
 
@@ -78,8 +97,18 @@ class Application @Inject() (ws: WSClient) extends Controller {
     }
   }
 
+  def copieVM_action = Action.async {
+    reqXml.map(response => {
+      val vapp = new Vapp(response.xml)
 
-  def copieVM(cookie : String, source_vm : String, name_new_vm : String) = {
+
+      process_copie(getCookie,"https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-bb168665-8203-4edc-9ff8-dab64e754620","swarm-agent-"+ (vapp.indice+1))
+//      vm_deploy_actor ! VMDeployed("swarm-agent-"+ (vapp.indice+1))
+      Redirect("/dashboard")
+    })
+  }
+
+  def process_copie(cookie : String, source_vm : String, name_new_vm : String) {
     val vm_copy_xml =     <RecomposeVAppParams
                             xmlns="http://www.vmware.com/vcloud/v1.5"
                             xmlns:ns2="http://schemas.dmtf.org/ovf/envelope/1"
@@ -98,6 +127,9 @@ class Application @Inject() (ws: WSClient) extends Controller {
         "Accept" -> "application/*+xml;version=1.5",
         "Content-Type" -> "application/vnd.vmware.vcloud.recomposeVAppParams+xml"
       ).post(vm_copy_xml)
+
+
+
   }
 
 }
