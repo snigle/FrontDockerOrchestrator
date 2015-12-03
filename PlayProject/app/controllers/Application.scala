@@ -2,7 +2,7 @@ package controllers
 
 import javax.inject.Inject
 
-import actors.DeployActor
+import actors.{DeployActor, VMDeployed}
 import akka.actor.{ActorSystem, Props}
 import models.Vapp
 import play.api.Play.current
@@ -26,6 +26,7 @@ class Application @Inject() (ws: WSClient) extends Controller {
 
 
 
+
   def index = Action.async {
     implicit request =>
       {
@@ -41,17 +42,15 @@ class Application @Inject() (ws: WSClient) extends Controller {
   def dashboard = Action.async { implicit request =>
     {
 
-      /* implicit val timeout = Timeout(Duration(60,SECONDS))
+       /*implicit val timeout = Timeout(Duration(60,SECONDS))
        val result = Await.result(vm_deploy_actor ? VMDeployed("swarm-agent-" + (4)),timeout.duration).asInstanceOf[String]
        println(result)*/
+
+
 
       reqXml.map(response => {
         val vapp = new Vapp(response.xml)
 //        println(vapp)
-
-
-
-
         Ok(views.html.index(vapp))
       })
 
@@ -100,10 +99,8 @@ class Application @Inject() (ws: WSClient) extends Controller {
   def copieVM_action = Action.async {
     reqXml.map(response => {
       val vapp = new Vapp(response.xml)
-
-
       process_copie(getCookie,"https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-bb168665-8203-4edc-9ff8-dab64e754620","swarm-agent-"+ (vapp.indice+1))
-//      vm_deploy_actor ! VMDeployed("swarm-agent-"+ (vapp.indice+1))
+      vm_deploy_actor ! VMDeployed("swarm-agent-" + (vapp.indice+1))
       Redirect("/dashboard")
     })
   }
