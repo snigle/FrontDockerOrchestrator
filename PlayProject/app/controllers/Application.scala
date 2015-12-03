@@ -35,7 +35,7 @@ class Application @Inject() (ws: WSClient) extends Controller {
       }
   }
 
-  def reqXml = ws.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vapp-9dd013e3-3f51-4cde-a19c-f96b4ad2e350/").withHeaders(
+  def reqXml() = ws.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vapp-9dd013e3-3f51-4cde-a19c-f96b4ad2e350/").withHeaders(
     "Cookie" -> getCookie,
     "Accept" -> "application/*+xml;version=1.5").get()
 
@@ -48,7 +48,7 @@ class Application @Inject() (ws: WSClient) extends Controller {
 
 
 
-      reqXml.map(response => {
+      reqXml().map(response => {
         val vapp = new Vapp(response.xml)
 //        println(vapp)
         Ok(views.html.index(vapp))
@@ -59,7 +59,7 @@ class Application @Inject() (ws: WSClient) extends Controller {
 
   def vappXml = Action.async { implicit request =>
     {
-      reqXml.map(response => Ok(response.xml))
+      reqXml().map(response => Ok(response.xml))
     }
   }
 
@@ -97,7 +97,7 @@ class Application @Inject() (ws: WSClient) extends Controller {
   }
 
   def copieVM_action = Action.async {
-    reqXml.map(response => {
+    reqXml().map(response => {
       val vapp = new Vapp(response.xml)
       process_copie(getCookie,"https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-bb168665-8203-4edc-9ff8-dab64e754620","swarm-agent-"+ (vapp.indice+1))
       vm_deploy_actor ! VMDeployed("swarm-agent-" + (vapp.indice+1))
