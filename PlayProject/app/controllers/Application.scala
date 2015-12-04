@@ -1,18 +1,18 @@
 package controllers
 
 import javax.inject.Inject
-
 import actors.{DeployActor, VMDeployed}
 import akka.actor.{ActorSystem, Props}
 import models.Vapp
 import play.api.Play.current
 import play.api.libs.ws._
 import play.api.mvc._
-
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
+import models.Vapp
+import models.VappFactory
 
 
 
@@ -30,14 +30,19 @@ class Application @Inject() (ws: WSClient) extends Controller {
   def index = Action.async {
     implicit request =>
       {
-        val cookie = getCookie
-        Future(Ok(cookie))
+        //val cookie = getCookie
+        //Future(Ok(cookie))
+        reqJson.map(response => {
+          Ok(response.json)
+        })
       }
   }
 
   def reqXml() = ws.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vapp-9dd013e3-3f51-4cde-a19c-f96b4ad2e350/").withHeaders(
     "Cookie" -> getCookie,
     "Accept" -> "application/*+xml;version=1.5").get()
+    
+  def reqJson = ws.url("https://192.168.30.53:8080/containers/json").get
 
   def dashboard = Action.async { implicit request =>
     {
@@ -46,15 +51,18 @@ class Application @Inject() (ws: WSClient) extends Controller {
        val result = Await.result(vm_deploy_actor ? VMDeployed("swarm-agent-" + (4)),timeout.duration).asInstanceOf[String]
        println(result)*/
 
+       val vapp : Future[Vapp] = for{
+         repXML <- reqXml()
+         repJson <- reqJson
+       }yield (VappFactory(repXML.xml, Some(repJson.json)))
+       
+
+        vapp.map { vapp => Ok(views.html.index(vapp)) }
+        
 
 
-      reqXml().map(response => {
-        val vapp = new Vapp(response.xml)
-//        println(vapp)
-        Ok(views.html.index(vapp))
-      })
-
-    }
+    
+  }
   }
 
   def vappXml = Action.async { implicit request =>
@@ -98,7 +106,7 @@ class Application @Inject() (ws: WSClient) extends Controller {
 
   def copieVM_action = Action.async {
     reqXml().map(response => {
-      val vapp = new Vapp(response.xml)
+      val vapp = VappFactory(response.xml)
       process_copie(getCookie,"https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-bb168665-8203-4edc-9ff8-dab64e754620","swarm-agent-"+ (vapp.indice+1))
       vm_deploy_actor ! VMDeployed("swarm-agent-" + (vapp.indice+1))
       Redirect("/dashboard")

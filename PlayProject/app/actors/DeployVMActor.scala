@@ -4,10 +4,10 @@ import akka.actor.{Actor, ActorLogging, PoisonPill}
 import akka.event.LoggingReceive
 import models.Vapp
 import play.api.libs.ws.WSResponse
-
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration._
 import scala.concurrent.Future
+import models.VappFactory
 
 /**
  * Created by eisti on 12/2/15.
@@ -28,7 +28,7 @@ println("testt")
       case VMDeployed(name,cpt) => {
         println("VMDeployed "+name);
            func().map(response => {
-             val vapp = new Vapp(response.xml)
+             val vapp = VappFactory(response.xml)
              val test_vapp_deployed = vapp.vms filter (x => x.name == name)
              vapp.vms.map(x => println(x.name))
              //          println(vapp)

@@ -1,6 +1,10 @@
 @(vapp: Vapp)
 
 
+@displayContainer(container : Container) = {
+    <p> @container.name --- @container.image </p>
+}
+
 @displayVm(vm : Vm) = {
     <fieldset style="border-color:@if(vm.active){green}else{red}">
     <legend>@vm.name (@vm.id)</legend>
@@ -8,6 +12,7 @@
     <li>Ip locale : @vm.ipLocal</li>
     <li>Ip externe : @vm.ipExternal</li>
     </ul>
+    @vm.containers.map(displayContainer)
     </fieldset>
 }
 
