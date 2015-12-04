@@ -1,12 +1,14 @@
 @(vapp: Vapp)
 
 
+
 @displayVm(vm : Vm) = {
     <fieldset style="border-color:@if(vm.active){green}else{red}">
     <legend>@vm.name (@vm.id)</legend>
     <ul>
-    <li>Ip locale : @vm.ipLocal</li>
-    <li>Ip externe : @vm.ipExternal</li>
+        <li>Ip locale : @vm.ipLocal</li>
+        <li>Ip externe : @vm.ipExternal</li>
+        <a href="http://localhost:9000/deleteVM/@vm.id" > <input type="button" value="Delete"/>  </a>
     </ul>
     </fieldset>
 }
@@ -14,6 +16,6 @@
 @main("Dashboad Docker Orchestrator VMWare") {
     
     <h1>Vapp - #@vapp.id - last id : @vapp.indice</h1>
-
+    <a href="http://localhost:9000/copieVM" > <input type="button" value="Create a VM"/>  </a>
     @vapp.vms.map(displayVm)
 }

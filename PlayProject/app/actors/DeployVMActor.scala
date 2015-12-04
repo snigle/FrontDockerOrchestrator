@@ -1,13 +1,14 @@
 package actors
 
-import akka.actor.{Actor, ActorLogging, PoisonPill}
+import akka.actor.{Actor, ActorLogging}
 import akka.event.LoggingReceive
 import models.Vapp
-import play.api.libs.ws.WSResponse
+import play.api.libs.ws.{WS, WSResponse}
 
 import scala.concurrent.ExecutionContext.Implicits._
-import scala.concurrent.duration._
 import scala.concurrent.Future
+import scala.concurrent.duration._
+import play.api.Play.current
 
 /**
  * Created by eisti on 12/2/15.
@@ -20,19 +21,19 @@ case class Message(s : String)
 
 
 
-class DeployActor(func: () => Future[WSResponse]) extends Actor with ActorLogging {
+class DeployActor(func: () => Future[WSResponse],cookie : String) extends Actor with ActorLogging {
 
-println("testt")
+//println("testt")
 
     def receive = LoggingReceive {
       case VMDeployed(name,cpt) => {
-        println("VMDeployed "+name);
+//        println("VMDeployed "+name);
            func().map(response => {
              val vapp = new Vapp(response.xml)
-             val test_vapp_deployed = vapp.vms filter (x => x.name == name)
-             vapp.vms.map(x => println(x.name))
+             val test_vapp_deployed = vapp.vms filter  (x => x.name == name)
+//             vapp.vms.map(x => println(x.name))
              //          println(vapp)
-             
+
              if(cpt<=0){
                println("Creation VM Time out");
              }
@@ -42,7 +43,28 @@ println("testt")
                context.system.scheduler.scheduleOnce(10 seconds, self ,VMDeployed(name,cpt-1))
              } else {
                println("Virtual machine sucessfully deployed")
-               //self ! PoisonPill
+               val vm_created = test_vapp_deployed(0)
+               val updateip_xml =
+                 <NetworkConnectionSection
+                 xmlns="http://www.vmware.com/vcloud/v1.5"
+                 xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1">
+                   <ovf:Info>Specifies the available VM network connections</ovf:Info>
+                   <PrimaryNetworkConnectionIndex>0</PrimaryNetworkConnectionIndex>
+                   <NetworkConnection network="NAT" needsCustomization="true">
+                     <NetworkConnectionIndex>0</NetworkConnectionIndex>
+                     <IsConnected>true</IsConnected>
+                     <IpAddressAllocationMode>POOL</IpAddressAllocationMode>
+                   </NetworkConnection>
+                 </NetworkConnectionSection>
+
+
+               WS.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-"+ vm_created.id +"/networkConnectionSection").withHeaders(
+                 "Cookie" -> cookie,
+                 "Accept" -> "application/*+xml;version=1.5",
+                 "Content-Type" -> "application/vnd.vmware.vcloud.networkConnectionSection+xml"
+               ).post(updateip_xml)
+
+               println("Ip updated")
              }
 
            })

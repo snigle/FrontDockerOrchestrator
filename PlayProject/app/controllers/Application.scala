@@ -22,7 +22,7 @@ import scala.util.{Failure, Success}
 class Application @Inject() (ws: WSClient) extends Controller {
 //  var cookie: Seq[WSCookie] = Seq[WSCookie]()
    val system = ActorSystem("VM")
-   val vm_deploy_actor =  system.actorOf(Props(new DeployActor(reqXml)))
+   val vm_deploy_actor =  system.actorOf(Props(new DeployActor(reqXml,getCookie)))
 
 
 
@@ -103,6 +103,19 @@ class Application @Inject() (ws: WSClient) extends Controller {
       vm_deploy_actor ! VMDeployed("swarm-agent-" + (vapp.indice+1))
       Redirect("/dashboard")
     })
+  }
+
+  def deleteVM_action(id_vm : String) = Action {
+    process_deleteVM(getCookie,id_vm)
+//    Thread.sleep(3000)
+    Redirect("/dashboard")
+  }
+
+  def process_deleteVM(cookie: String,id_vm : String): Unit = {
+    WS.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-" + id_vm).withHeaders(
+      "Cookie" -> cookie,
+      "Accept" -> "application/*+xml;version=1.5"
+    ).delete
   }
 
   def process_copie(cookie : String, source_vm : String, name_new_vm : String) {
