@@ -17,7 +17,9 @@ object VmFactory{
       case Some(json) => {
         val names = (json \\ "Names").map(_.head.asOpt[String].getOrElse(""))
         val images = (json \\ "Image").map(_.asOpt[String].getOrElse(""))
-        names.indices.map(i => Container("",names(i),images(i),Nil))
+        val ids = (json \\ "Id").map(_.asOpt[String].getOrElse(""))
+        val ports = (json \\ "Ports")
+        names.indices.map(i => Container(ids(i),names(i),images(i),(ports(i) \\ "PublicPort").map(_.asOpt[Int].getOrElse(0))))
       }
     }
 

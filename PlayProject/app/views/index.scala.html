@@ -2,7 +2,9 @@
 
 
 @displayContainer(container : Container) = {
-    <p> @container.name --- @container.image </p>
+    
+    <tr><td>@container.id</td><td>@container.name</td><td>@container.image</td><td>@container.ports.mkString(", ")</td></tr>
+    
 }
 
 @displayVm(vm : Vm) = {
@@ -11,8 +13,11 @@
     <ul>
     <li>Ip locale : @vm.ipLocal</li>
     <li>Ip externe : @vm.ipExternal</li>
-    </ul>
-    @vm.containers.map(displayContainer)
+    </ul>    
+    <table>
+        <tr><th>Id</th><th>Name</th><th>Image</th><th>Ports</th></tr>
+        @vm.containers.map(displayContainer)
+    </table>
     </fieldset>
 }
 
