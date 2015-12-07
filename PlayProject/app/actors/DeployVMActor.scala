@@ -10,6 +10,9 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import play.api.Play.current
 
+import models.VappFactory
+
+
 /**
  * Created by eisti on 12/2/15.
  */
@@ -30,9 +33,10 @@ class DeployActor(func: () => Future[WSResponse],cookie : String) extends Actor 
       case VMDeployed(name,cpt) => {
 //        println("VMDeployed "+name);
            func().map(response => {
-             val vapp = new Vapp(response.xml)
-             val test_vapp_deployed = vapp.vms filter  (x => x.name == name)
+             val vapp = VappFactory(response.xml)
+             val test_vapp_deployed = vapp.vms filter (x => x.name == name)
 //             vapp.vms.map(x => println(x.name))
+
              //          println(vapp)
 
              if(cpt<=0){
@@ -67,7 +71,7 @@ class DeployActor(func: () => Future[WSResponse],cookie : String) extends Actor 
 
       case VMPoweredOn(id_vm,cpt) => {
         func().map(response => {
-          val vapp = new Vapp(response.xml)
+          val vapp = VappFactory(response.xml)
           val test_vapp_deployed = vapp.vms filter (x => x.id == id_vm)
           val vm_created = test_vapp_deployed(0)
 
