@@ -51,6 +51,7 @@ class Application @Inject() (ws: WSClient) extends Controller {
        val result = Await.result(vm_deploy_actor ? VMDeployed("swarm-agent-" + (4)),timeout.duration).asInstanceOf[String]
        println(result)*/
 
+      //TODO Faire en sorte que lorsque repJson ne fonctionne pas on peut envoyer None
        val vapp : Future[Vapp] = for{
          repXML <- reqXml()
          repJson <- reqJson
