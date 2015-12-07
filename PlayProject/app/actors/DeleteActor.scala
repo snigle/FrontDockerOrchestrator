@@ -7,7 +7,7 @@ import scala.concurrent.Future
 import play.api.libs.ws.WSResponse
 import scala.concurrent.ExecutionContext.Implicits._
 import models.VappFactory
-
+import scala.concurrent.duration._ 
 
 case class Delete(vm_id : String, count : Int = 10)
 
@@ -21,7 +21,8 @@ class DeleteActor (ws: WSClient, func: () => Future[WSResponse], cookie : () => 
           println("Delete Time out : VM not shutdown")
         }
         else if(vapp.vms.filter(_.id==vm_id).head.active){
-          self ! Delete(vm_id,count-1)
+          println("Vm not powerOff yet, trying again")
+          context.system.scheduler.scheduleOnce(2 seconds, self ,Delete(vm_id,count-1))
         }
         else{
            ws.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-" + vm_id).withHeaders(
