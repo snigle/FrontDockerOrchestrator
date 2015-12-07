@@ -25,7 +25,7 @@ case class Message(s : String)
 
 
 
-class DeployActor(func: () => Future[WSResponse],cookie : String) extends Actor with ActorLogging {
+class DeployActor(func: () => Future[WSResponse],cookie : () => String) extends Actor with ActorLogging {
 
 //println("testt")
 
@@ -50,7 +50,7 @@ class DeployActor(func: () => Future[WSResponse],cookie : String) extends Actor 
                println("Virtual machine sucessfully deployed")
                val vm_created = test_vapp_deployed(0)
                WS.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-" + vm_created.id +"/power/action/powerOn").withHeaders(
-                                "Cookie" -> cookie,
+                                "Cookie" -> cookie(),
                                 "Accept" -> "application/*+xml;version=1.5"
                               ).post("")
                println("Virtual machine powered on")

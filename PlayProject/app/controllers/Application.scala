@@ -13,6 +13,8 @@ import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
 import models.Vapp
 import models.VappFactory
+import actors.Delete
+import actors.DeleteActor
 
 
 
@@ -23,6 +25,7 @@ class Application @Inject() (ws: WSClient) extends Controller {
 //  var cookie: Seq[WSCookie] = Seq[WSCookie]()
    val system = ActorSystem("VM")
    val vm_deploy_actor =  system.actorOf(Props(new DeployActor(reqXml,getCookie)))
+   val vm_delete_actor =  system.actorOf(Props(new DeleteActor(ws,reqXml,getCookie)))
 
 
 
@@ -39,7 +42,7 @@ class Application @Inject() (ws: WSClient) extends Controller {
   }
 
   def reqXml() = ws.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vapp-9dd013e3-3f51-4cde-a19c-f96b4ad2e350/").withHeaders(
-    "Cookie" -> getCookie,
+    "Cookie" -> getCookie(),
     "Accept" -> "application/*+xml;version=1.5").get()
     
   def reqJson = ws.url("https://192.168.30.53:8080/containers/json").get
@@ -91,7 +94,7 @@ class Application @Inject() (ws: WSClient) extends Controller {
 //  }
 
 
-  def getCookie = {
+  def getCookie() = {
     val req =
       ws.url("https://vcloud-director-http-2.ccr.eisti.fr/api/login").withHeaders("Accept" -> "application/*+xml;version=5.1").withAuth("user1@icc-02", "eisti0002", WSAuthScheme.BASIC).get().map {
         response =>
@@ -108,30 +111,38 @@ class Application @Inject() (ws: WSClient) extends Controller {
   def copieVM_action = Action.async {
     reqXml().map(response => {
       val vapp = VappFactory(response.xml)
-      process_copie(getCookie,"https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-bb168665-8203-4edc-9ff8-dab64e754620","swarm-agent-"+ (vapp.indice+1))
+      process_copie(getCookie(),"https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-bb168665-8203-4edc-9ff8-dab64e754620","swarm-agent-"+ (vapp.indice+1))
       vm_deploy_actor ! VMDeployed("swarm-agent-" + (vapp.indice+1))
       Redirect("/dashboard")
     })
   }
 
-  def deleteVM_action(id_vm : String) = Action {
-    process_deleteVM(getCookie,id_vm)
-//    Thread.sleep(3000)
-    Redirect("/dashboard")
+  def deleteVM_action(id_vm : String) = Action.async {
+    val cookie = getCookie()
+    
+    //PowerOff
+    val data = <UndeployVAppParams xmlns="http://www.vmware.com/vcloud/v1.5">
+    <UndeployPowerAction>powerOff</UndeployPowerAction>
+</UndeployVAppParams>
+          
+    ws.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-" + id_vm +"/action/undeploy").withHeaders(
+    "Cookie" -> cookie,
+    "Accept" -> "application/*+xml;version=1.5",
+    "Content-Type" -> "application/vnd.vmware.vcloud.undeployVAppParams+xml"
+  ).post(data).map( response => {
+      vm_delete_actor ! Delete(id_vm)
+      Redirect("/dashboard").withSession(("delete",id_vm))
+    })
+        
+    
   }
 
   def process_deleteVM(cookie: String,id_vm : String): Unit = {
 
-    WS.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-" + id_vm + "/power/action/suspend").withHeaders(
-      "Cookie" -> cookie,
-      "Accept" -> "application/*+xml;version=1.5"
-    ).post("")
+    
 
 
-    WS.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-" + id_vm).withHeaders(
-      "Cookie" -> cookie,
-      "Accept" -> "application/*+xml;version=1.5"
-    ).delete
+    
   }
 
   def process_copie(cookie : String, source_vm : String, name_new_vm : String) {
