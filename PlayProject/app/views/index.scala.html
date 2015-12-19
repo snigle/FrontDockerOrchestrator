@@ -1,11 +1,17 @@
 @(vapp: Vapp)
 
-
-
 @displayContainer(container : Container) = {
     
     <tr class="@if(container.active){success}else{danger}">
-        <td>@container.id</td><td>@container.name</td><td>@container.image</td><td>@container.ports.mkString(", ")</td>
+        <td>@container.id</td>
+        <td>@container.name</td>
+        <td>@container.image</td>
+        <td>@container.ports.mkString(", ")</td>
+        <td><a class="btn btn-@if(container.active){danger}else{success}"
+            href="@if(container.active){@routes.ContainersController.stop(container.id)}else{@routes.ContainersController.start(container.id)}">
+            @if(container.active){stop}else{start}
+            </a>
+        </td>
     </tr>
     
 }
@@ -19,11 +25,13 @@
 	    <li>Ip locale : @vm.ipLocal</li>
 	    <li>Ip externe : @vm.ipExternal</li>
 	    
-	    </ul>    
+	    </ul>
+	    @if(!vm.containers.filter(container => !container.image.contains("swarm")).isEmpty){    
 	    <table class="table">
-	        <tr><th>Id</th><th>Name</th><th>Image</th><th>Ports</th></tr>
+	        <tr><th>Id</th><th>Name</th><th>Image</th><th>Ports</th><th>Action</th></tr>
 	        @vm.containers.filter(container => !container.image.contains("swarm")).map(displayContainer)
 	    </table>
+	    }
 	</div>
     </div>
 }
@@ -31,6 +39,10 @@
 @main("Dashboad Docker Orchestrator VMWare") {
     
     <h1>Vapp - #@vapp.id - last id : @vapp.indice <a href="http://localhost:9000/copieVM" > <input class="btn btn-success" type="button" value="Add a VM"/>  </a></h1>
+    <form method="post" action="@routes.ContainersController.create">
+    <input id="form_params" name="image" placeholder="Image name"/>
+    <button type="submit">Create container</button>
+    </form>
     
     @vapp.vms.map(displayVm)
 }
