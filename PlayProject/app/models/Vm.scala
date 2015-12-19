@@ -19,7 +19,8 @@ object VmFactory{
         val images = (json \\ "Image").map(_.asOpt[String].getOrElse(""))
         val ids = (json \\ "Id").map(_.asOpt[String].getOrElse(""))
         val ports = (json \\ "Ports")
-        names.indices.map(i => Container(ids(i),names(i),images(i),(ports(i) \\ "PublicPort").map(_.asOpt[Int].getOrElse(0))))
+        val actives = (json \\ "Status").map(_.asOpt[String].getOrElse("")).toList.map(act => act.contains("Up"))
+        names.indices.map(i => Container(ids(i),names(i),images(i),(ports(i) \\ "PublicPort").map(_.asOpt[Int].getOrElse(0)),actives(i)))
       }
     }
 

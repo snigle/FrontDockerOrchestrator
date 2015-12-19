@@ -45,7 +45,7 @@ class Application @Inject() (ws: WSClient) extends Controller {
     "Cookie" -> getCookie(),
     "Accept" -> "application/*+xml;version=1.5").get()
     
-  def reqJson = ws.url("https://192.168.30.53:8080/containers/json").get
+  def reqJson = ws.url("https://192.168.30.53:8080/containers/json?all=1").get
 
   def dashboard = Action.async { implicit request =>
     {
@@ -104,7 +104,7 @@ class Application @Inject() (ws: WSClient) extends Controller {
       }
     Await.ready(req, Duration.Inf).value.get match {
       case Success(x) => x.head.toString
-      case Failure(x) => throw new Exception
+      case Failure(x) => throw new Exception(x.getMessage)
     }
   }
 

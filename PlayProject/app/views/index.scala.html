@@ -4,29 +4,33 @@
 
 @displayContainer(container : Container) = {
     
-    <tr><td>@container.id</td><td>@container.name</td><td>@container.image</td><td>@container.ports.mkString(", ")</td></tr>
+    <tr class="@if(container.active){success}else{danger}">
+        <td>@container.id</td><td>@container.name</td><td>@container.image</td><td>@container.ports.mkString(", ")</td>
+    </tr>
     
 }
 
 
 @displayVm(vm : Vm) = {
-    <fieldset style="border-color:@if(vm.active){green}else{red}">
-    <legend>@vm.name (@vm.id)</legend>
-    <ul>
-    <li>Ip locale : @vm.ipLocal</li>
-    <li>Ip externe : @vm.ipExternal</li>
-    <a href="http://localhost:9000/deleteVM/@vm.id" > <input type="button" value="Delete"/>  </a>
-    </ul>    
-    <table>
-        <tr><th>Id</th><th>Name</th><th>Image</th><th>Ports</th></tr>
-        @vm.containers.map(displayContainer)
-    </table>
-    </fieldset>
+    <div class="panel panel-@if(vm.active){success}else{danger}">
+    <div class="panel-heading">@vm.name (@vm.id) <a href="http://localhost:9000/deleteVM/@vm.id" > <input class="btn btn-danger" type="button" value="Delete VM"/>  </a></div>
+	<div class="panel-body">
+	    <ul>
+	    <li>Ip locale : @vm.ipLocal</li>
+	    <li>Ip externe : @vm.ipExternal</li>
+	    
+	    </ul>    
+	    <table class="table">
+	        <tr><th>Id</th><th>Name</th><th>Image</th><th>Ports</th></tr>
+	        @vm.containers.filter(container => !container.image.contains("swarm")).map(displayContainer)
+	    </table>
+	</div>
+    </div>
 }
 
 @main("Dashboad Docker Orchestrator VMWare") {
     
-    <h1>Vapp - #@vapp.id - last id : @vapp.indice</h1>
-    <a href="http://localhost:9000/copieVM" > <input type="button" value="Create a VM"/>  </a>
+    <h1>Vapp - #@vapp.id - last id : @vapp.indice <a href="http://localhost:9000/copieVM" > <input class="btn btn-success" type="button" value="Add a VM"/>  </a></h1>
+    
     @vapp.vms.map(displayVm)
 }
