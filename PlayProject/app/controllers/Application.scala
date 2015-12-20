@@ -29,10 +29,6 @@ import models.Container
 
 class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controller {
   
-  def socket = WebSocket.acceptWithActor[String, String] { request => out =>
-    ContainersActor.props(out)
-  }
-  println("socket : "+socket);
   
 //  var cookie: Seq[WSCookie] = Seq[WSCookie]()
    val vm_deploy_actor =  system.actorOf(Props(new DeployActor(reqXml,getCookie)))
@@ -200,7 +196,7 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
     def writes(container: Container) = Json.obj(
       "id"  -> container.id,
       "name" -> container.name,
-      "ports" -> container.ports,
+      //"ports" -> container.ports,
       "image" -> container.image,
       "active" -> container.active
     )

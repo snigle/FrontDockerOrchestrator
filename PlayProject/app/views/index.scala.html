@@ -11,6 +11,9 @@
             href="@if(container.active){@routes.ContainersController.stop(container.id)}else{@routes.ContainersController.start(container.id)}">
             @if(container.active){stop}else{start}
             </a>
+            @if(!container.active){
+            <a class="btn btn-danger" href="@routes.ContainersController.delete(container.id)">X</a>
+            }
         </td>
     </tr>
     
@@ -37,12 +40,17 @@
 }
 
 @main("Dashboad Docker Orchestrator VMWare") {
-    
+    <div class="alert alert-{{alert.type}}" role="alert" ng-if="alert.active">
+    <button type="button" class="close" ng-if="alert.type!='info'" ng-click="alert.active = false" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    {{alert.text}}</div>
     <h1>Vapp - #@vapp.id - last id : @vapp.indice <a href="http://localhost:9000/copieVM" > <input class="btn btn-success" type="button" value="Add a VM"/>  </a></h1>
-    <form method="post" action="@routes.ContainersController.create">
+    <input ng-model="image" name="image" placeholder="Image name"/><button ng-click="createContainer()" ng-if="!creatingContainer">Create container</button>
+    <button ng-click="test()">test</button>
+    <!--  <form method="post" action="@routes.ContainersController.create">
     <input id="form_params" name="image" placeholder="Image name"/>
     <button type="submit">Create container</button>
     </form>
+    -->
     
     @vapp.vms.map(displayVm)
 }
