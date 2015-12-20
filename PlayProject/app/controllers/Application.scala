@@ -7,7 +7,6 @@ import models.Vapp
 import play.api.Play.current
 import play.api.libs.ws._
 import play.api.mvc._
-import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
@@ -15,15 +14,27 @@ import models.Vapp
 import models.VappFactory
 import actors.Delete
 import actors.DeleteActor
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import actors.ContainersActor
+import play.api.libs.json.Writes
+import models.Vapp
+import play.api.libs.json.Json
+import models.Vm
+import models.Container
 
 
 
 
 
 
-class Application @Inject() (ws: WSClient) extends Controller {
+class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controller {
+  
+  def socket = WebSocket.acceptWithActor[String, String] { request => out =>
+    ContainersActor.props(out)
+  }
+  println("socket : "+socket);
+  
 //  var cookie: Seq[WSCookie] = Seq[WSCookie]()
-   val system = ActorSystem("VM")
    val vm_deploy_actor =  system.actorOf(Props(new DeployActor(reqXml,getCookie)))
    val vm_delete_actor =  system.actorOf(Props(new DeleteActor(ws,reqXml,getCookie)))
 
@@ -53,7 +64,7 @@ class Application @Inject() (ws: WSClient) extends Controller {
        /*implicit val timeout = Timeout(Duration(60,SECONDS))
        val result = Await.result(vm_deploy_actor ? VMDeployed("swarm-agent-" + (4)),timeout.duration).asInstanceOf[String]
        println(result)*/
-       println("test");
+//       println("test");
       //TODO Faire en sorte que lorsque repJson ne fonctionne pas on peut envoyer None
        val vapp : Future[Vapp] = for{
          repXML <- reqXml()
@@ -168,6 +179,55 @@ class Application @Inject() (ws: WSClient) extends Controller {
 
 
   }
+  
+  
+  def getVapp = Action.async { 
+    implicit request =>
+    {
+       val vapp : Future[Vapp] = for{
+         repXML <- reqXml()
+         repJson <- reqJson
+       }yield (VappFactory(repXML.xml, Some(repJson.json)))
+
+        vapp.map { vapp => Ok(Json.toJson(vapp)) }
+    }
+  }
+  
+  
+  //Json descriptors :
+  //id : String, name : String, image : String, ports : Seq[Int], active : Boolean
+  implicit val ContainerToJson = new Writes[Container] {
+    def writes(container: Container) = Json.obj(
+      "id"  -> container.id,
+      "name" -> container.name,
+      "ports" -> container.ports,
+      "image" -> container.image,
+      "active" -> container.active
+    )
+  }
+  
+  //id : String, name : String, ipLocal : String, ipExternal : String, active : Boolean = false, containers : Seq[Container] = Nil
+  implicit val VmToJson = new Writes[Vm] {
+    def writes(vm: Vm) = Json.obj(
+      "id" -> vm.id,
+      "name" -> vm.name,
+      "ipLocal" -> vm.ipLocal,
+      "ipExternal" -> vm.ipExternal,
+      "active" -> vm.active,
+      "containers" -> vm.containers
+    )
+  }
+  
+  //id : String, vms : Seq[Vm], indice : Int
+  implicit val VappToJson = new Writes[Vapp] {
+    def writes(vapp: Vapp) = Json.obj(
+      "id"  -> vapp.id,
+      "vms" -> vapp.vms,
+      "indice" -> vapp.indice
+    )
+  }
+
+  
 
 }
 
