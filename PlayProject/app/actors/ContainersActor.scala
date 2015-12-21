@@ -7,6 +7,7 @@ import akka.actor.actorRef2Scala
 import akka.actor.PoisonPill
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
+import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits._
 
 
@@ -47,7 +48,6 @@ class ContainersActor(out: ActorRef, ws: WSClient) extends Actor {
       """)
   
   
-  //    Ok(params)
         ws.url("https://192.168.30.53:8080/containers/create").post(params).map(response =>
           {
             val res = 
@@ -68,9 +68,8 @@ class ContainersActor(out: ActorRef, ws: WSClient) extends Actor {
             }
             println("Requete Ok "+image)
             out ! res.toString()
-//            println(response.body)
-//            println(response.json)
-            //Redirect(routes.Application.dashboard())
+            self ! PoisonPill
+
           })
     }
   }

@@ -43,7 +43,7 @@
     <div class="alert alert-{{alert.type}}" role="alert" ng-if="alert.active">
     <button type="button" class="close" ng-if="alert.type!='info'" ng-click="alert.active = false" aria-label="Close"><span aria-hidden="true">&times;</span></button>
     {{alert.text}}</div>
-    <h1>Vapp - #@vapp.id - last id : @vapp.indice <a href="http://localhost:9000/copieVM" > <input class="btn btn-success" type="button" value="Add a VM"/>  </a></h1>
+    <h1>Vapp - #@vapp.id - last id : @vapp.indice <button ng-click="copieVM()" class="btn btn-success">Add a VM</button></h1>
     <input ng-model="image" name="image" placeholder="Image name"/><button ng-click="createContainer()" ng-if="!creatingContainer">Create container</button>
     <button ng-click="test()">test</button>
     <!--  <form method="post" action="@routes.ContainersController.create">

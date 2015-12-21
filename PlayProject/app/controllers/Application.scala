@@ -1,7 +1,7 @@
 package controllers
 
 import javax.inject.Inject
-import actors.{DeployActor, VMDeployed}
+import actors.{DeployVMActor, VMDeployed}
 import akka.actor.{ActorSystem, Props}
 import models.Vapp
 import play.api.Play.current
@@ -31,7 +31,7 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
   
   
 //  var cookie: Seq[WSCookie] = Seq[WSCookie]()
-   val vm_deploy_actor =  system.actorOf(Props(new DeployActor(reqXml,getCookie)))
+//  val vm_deploy_actor =  system.actorOf(Props(new DeployActor(reqXml,getCookie)))
    val vm_delete_actor =  system.actorOf(Props(new DeleteActor(ws,reqXml,getCookie)))
 
 
@@ -115,15 +115,10 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
     }
   }
 
-  def copieVM_action = Action.async {
-    reqXml().map(response => {
-      val vapp = VappFactory(response.xml)
-      process_copie(getCookie(),"https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-bb168665-8203-4edc-9ff8-dab64e754620","swarm-agent-"+ (vapp.indice+1))
-      vm_deploy_actor ! VMDeployed("swarm-agent-" + (vapp.indice+1))
-      Redirect("/dashboard")
-    })
+  def newVM = WebSocket.acceptWithActor[String, String] { request => out =>
+    DeployVMActor.props(out, ws, reqXml, getCookie)
   }
-
+  
   def deleteVM_action(id_vm : String) = Action.async {
     val cookie = getCookie()
     
@@ -144,37 +139,8 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
     
   }
 
-  def process_deleteVM(cookie: String,id_vm : String): Unit = {
 
-    
-
-
-    
-  }
-
-  def process_copie(cookie : String, source_vm : String, name_new_vm : String) {
-    val vm_copy_xml =     <RecomposeVAppParams
-                            xmlns="http://www.vmware.com/vcloud/v1.5"
-                            xmlns:ns2="http://schemas.dmtf.org/ovf/envelope/1"
-                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                            xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1"
-                            xmlns:environment_1="http://schemas.dmtf.org/ovf/environment/1">
-                              <Description> "api deployed vm to ol-vapp-04" </Description>
-                              <SourcedItem sourceDelete="false">
-                                <Source name={name_new_vm} href={source_vm}/>
-                              </SourcedItem>
-                              <AllEULAsAccepted>true</AllEULAsAccepted>
-                          </RecomposeVAppParams>
-
-      WS.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vapp-9dd013e3-3f51-4cde-a19c-f96b4ad2e350/action/recomposeVApp").withHeaders(
-        "Cookie" -> cookie,
-        "Accept" -> "application/*+xml;version=1.5",
-        "Content-Type" -> "application/vnd.vmware.vcloud.recomposeVAppParams+xml"
-      ).post(vm_copy_xml)
-
-
-
-  }
+  
   
   
   def getVapp = Action.async { 
