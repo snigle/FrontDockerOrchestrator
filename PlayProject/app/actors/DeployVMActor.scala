@@ -11,6 +11,7 @@ import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
+import scala.sys.process._
 
 /**
  * Created by eisti on 12/2/15.
@@ -125,16 +126,22 @@ class DeployVMActor(override val out: ActorRef, override val ws: WSClient, overr
     case IPChanged(vm, task) => {
       waitTask(IPChanged(vm, updateTask(task)), "Assigning IP to the Virtual machine, please wait", () => {
         println("ip ok")
-        reqChangeHostname(vm)
+        //reqChangeHostname(vm)
+        reqPowerOn(vm)
       })
     }
+
+
     case PowerOn(vm, task) => {
       waitTask(PowerOn(vm, updateTask(task)), "Starting the Virtual machine, please wait", () => {
+        out ! response_json("info", "Installing swarm on the agent : it can take several minutes")
+        var installSwarm_cmd = ("ssh -i conf/server_key root@192.168.30.52 docker-machine create -d generic --generic-ip-address " + vm.ipLocal + "--swarm --swarm-discovery=\"consul://192.168.2.103:8500\" " + vm.name).!!
         out ! response_json("success", "Machine has been created")
       })
     }
-    case VMDeployed(name, task) => {
 
+
+    case VMDeployed(name, task) => {
       waitTask(VMDeployed(name, updateTask(task)), "Virtual machine is being deployed, please wait", () => {
         val vapp = getVapp
         val vm = vapp.vms.filter(x => x.name == name).head

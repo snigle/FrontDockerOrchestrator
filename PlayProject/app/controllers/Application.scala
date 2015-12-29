@@ -1,36 +1,23 @@
 package controllers
 
 import javax.inject.Inject
-import actors.{Delete, DeleteActor, DeployVMActor}
-import akka.actor.{ActorSystem, Props}
-import models.{Container, Vapp, VappFactory, Vm}
+import actors.{ Delete, DeleteActor, DeployVMActor }
+import akka.actor.{ ActorSystem, Props }
+import models.{ Container, Vapp, VappFactory, Vm }
 import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.libs.json.{Json, Writes}
+import play.api.libs.json.{ Json, Writes }
 import play.api.libs.ws._
 import play.api.mvc._
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ Await, Future }
 import scala.sys.process.Process
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 import scala.sys.process._
 import actors.Init
 import play.api.mvc.WebSocket.FrameFormatter
 
-
-
-
-
-
 class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controller {
-  
-  
-//  var cookie: Seq[WSCookie] = Seq[WSCookie]()
-//  val vm_deploy_actor =  system.actorOf(Props(new DeployActor(reqXml,getCookie)))
-//   val vm_delete_actor =  system.actorOf(Props(new DeleteActor(ws,reqXml,getCookie)))
-
-
-
 
   def index = Action.async {
     implicit request =>
@@ -46,29 +33,25 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
   def reqXml() = ws.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vapp-9dd013e3-3f51-4cde-a19c-f96b4ad2e350/").withHeaders(
     "Cookie" -> getCookie(),
     "Accept" -> "application/*+xml;version=1.5").get()
-    
+
   def reqJson = ws.url("https://192.168.30.53:8080/containers/json?all=1").get
 
   def dashboard = Action.async { implicit request =>
     {
 
-       /*implicit val timeout = Timeout(Duration(60,SECONDS))
+      /*implicit val timeout = Timeout(Duration(60,SECONDS))
        val result = Await.result(vm_deploy_actor ? VMDeployed("swarm-agent-" + (4)),timeout.duration).asInstanceOf[String]
        println(result)*/
-//       println("test");
+      //       println("test");
       //TODO Faire en sorte que lorsque repJson ne fonctionne pas on peut envoyer None
-       val vapp : Future[Vapp] = for{
-         repXML <- reqXml()
-         repJson <- reqJson
-       }yield (VappFactory(repXML.xml, Some(repJson.json)))
-       
+      val vapp: Future[Vapp] = for {
+        repXML <- reqXml()
+        repJson <- reqJson
+      } yield (VappFactory(repXML.xml, Some(repJson.json)))
 
-        vapp.map { vapp => Ok(views.html.index(vapp)) }
-        
+      vapp.map { vapp => Ok(views.html.index(vapp)) }
 
-
-    
-  }
+    }
   }
 
   def vappXml = Action.async { implicit request =>
@@ -76,25 +59,6 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
       reqXml().map(response => Ok(response.xml))
     }
   }
-
-
-  // Pas encore testée
-//  def getVMs =  {
-//    val req =
-//  {
-//    //"Accept:application/*+xml;version=1.5" -X GET https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vapp-cb109e5b-e457-450e-aff9-322cdd6181f6/productSections
-//    ws.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vapp-9dd013e3-3f51-4cde-a19c-f96b4ad2e350/").withHeaders(
-//      "Cookie" -> getCookie,
-//      "Accept" -> "application/*+xml;version=1.5").get().map(response => {
-//      val ids = response.xml \ "Children" \ "Vm"
-//      println(ids.isEmpty)
-//      println(ids.map(id=>id.attribute("id"))mkString("\n"))
-//      val liste_vm = ids.map(id=>id.attribute("id"))mkString
-//    })
-//
-//  }
-//  }
-
 
   def getCookie() = {
     val req =
@@ -110,52 +74,48 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
     }
   }
 
-  def newVM = WebSocket.acceptWithActor[String, String] { request => out =>
-    DeployVMActor.props(out, ws, reqXml, getCookie)
+  def newVM = WebSocket.acceptWithActor[String, String] { request =>
+    out =>
+      DeployVMActor.props(out, ws, reqXml, getCookie)
   }
-  
-  
+
   implicit val InitFormat = Json.format[Init]
   implicit val InitFormatter = FrameFormatter.jsonFrame[Init]
-  def deleteVM = WebSocket.acceptWithActor[Init, String] { request => out =>
-    DeleteActor.props(out, ws, reqXml, getCookie)
+  def deleteVM = WebSocket.acceptWithActor[Init, String] { request =>
+    out =>
+      DeleteActor.props(out, ws, reqXml, getCookie)
   }
 
-
-  def installSwarm(ip_vm : String) = Action {
-    implicit request => {
-      val test_cmd = "ssh -i conf/server_key root@192.168.30.52 echo toto".!!
-      test_cmd.foreach(println _)
-      Ok("toto")
-    }
-  }
-  
-  
-  
-  def getVapp = Action.async { 
+  def installSwarm(ip_vm: String) = Action {
     implicit request =>
-    {
-       val vapp : Future[Vapp] = for{
-         repXML <- reqXml()
-         repJson <- reqJson
-       }yield (VappFactory(repXML.xml, Some(repJson.json)))
-        vapp.map { vapp => Ok(Json.toJson(vapp)) }
-    }
+      {
+        var test_cmd = ("ssh -i conf/server_key root@" + ip_vm + " docker-machine create -d generic --generic-ip-address 192.168.2.101 --swarm --swarm-discovery=\"consul://192.168.2.103:8500\" swarm-agent-1").!!
+        Ok(test_cmd)
+      }
   }
-  
-  
+
+  def getVapp = Action.async {
+    implicit request =>
+      {
+        val vapp: Future[Vapp] = for {
+          repXML <- reqXml()
+          repJson <- reqJson
+        } yield (VappFactory(repXML.xml, Some(repJson.json)))
+        vapp.map { vapp => Ok(Json.toJson(vapp)) }
+      }
+  }
+
   //Json descriptors :
   //id : String, name : String, image : String, ports : Seq[Int], active : Boolean
   implicit val ContainerToJson = new Writes[Container] {
     def writes(container: Container) = Json.obj(
-      "id"  -> container.id,
+      "id" -> container.id,
       "name" -> container.name,
       //"ports" -> container.ports,
       "image" -> container.image,
-      "active" -> container.active
-    )
+      "active" -> container.active)
   }
-  
+
   //id : String, name : String, ipLocal : String, ipExternal : String, active : Boolean = false, containers : Seq[Container] = Nil
   implicit val VmToJson = new Writes[Vm] {
     def writes(vm: Vm) = Json.obj(
@@ -164,20 +124,16 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
       "ipLocal" -> vm.ipLocal,
       "ipExternal" -> vm.ipExternal,
       "active" -> vm.active,
-      "containers" -> vm.containers
-    )
+      "containers" -> vm.containers)
   }
-  
+
   //id : String, vms : Seq[Vm], indice : Int
   implicit val VappToJson = new Writes[Vapp] {
     def writes(vapp: Vapp) = Json.obj(
-      "id"  -> vapp.id,
+      "id" -> vapp.id,
       "vms" -> vapp.vms,
-      "indice" -> vapp.indice
-    )
+      "indice" -> vapp.indice)
   }
-
-  
 
 }
 
