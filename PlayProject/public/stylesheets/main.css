@@ -2,3 +2,13 @@ fieldset {
 	margin-bottom:50px;
 	margin-top:25px;
 }
+.fa-spinner{
+	margin-right:10px;
+	font-size:18px;
+}
+.fa-trash{
+	cursor: pointer;
+}
+.form-inline .form-control, .form-inline .btn{
+	margin-bottom:10px;
+}

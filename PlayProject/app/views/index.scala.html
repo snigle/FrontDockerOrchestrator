@@ -22,7 +22,7 @@
 
 @displayVm(vm : Vm) = {
     <div class="panel panel-@if(vm.active){success}else{danger}">
-    <div class="panel-heading">@vm.name (@vm.id) <a href="http://localhost:9000/deleteVM/@vm.id" > <input class="btn btn-danger" type="button" value="Delete VM"/>  </a></div>
+    <div class="panel-heading">@vm.name (@vm.id) @if(vm.name!="mh-keystore" && vm.name!="swarm-master" && vm.name!="Template"){<a href="http://localhost:9000/deleteVM/@vm.id" > <input class="btn btn-danger" type="button" value="Delete VM"/>  </a>}</div>
 	<div class="panel-body">
 	    <ul>
 	    <li>Ip locale : @vm.ipLocal</li>
@@ -40,17 +40,34 @@
 }
 
 @main("Dashboad Docker Orchestrator VMWare") {
+    
     <div class="alert alert-{{alert.type}}" role="alert" ng-if="alert.active">
     <button type="button" class="close" ng-if="alert.type!='info'" ng-click="alert.active = false" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-    {{alert.text}}</div>
-    <h1>Vapp - #@vapp.id - last id : @vapp.indice <button ng-click="copieVM()" class="btn btn-success">Add a VM</button></h1>
-    <input ng-model="image" name="image" placeholder="Image name"/><button ng-click="createContainer()" ng-if="!creatingContainer">Create container</button>
-    <button ng-click="test()">test</button>
-    <!--  <form method="post" action="@routes.ContainersController.create">
-    <input id="form_params" name="image" placeholder="Image name"/>
-    <button type="submit">Create container</button>
-    </form>
-    -->
+    <span class="fa fa-spinner fa-spin" ng-if="alert.type=='info'"></span>{{alert.text}}
+    <span ng-if="alert.type=='success'"><br />Please <a href="" ng-click="reload();">reload the page</a> to see changes</span>
+    </div>
     
+    
+    <h1>Vapp - #@vapp.id - last id : @vapp.indice <button ng-click="copieVM()" class="btn btn-success">Add a VM</button></h1>
+    
+    <div class="panel panel-default">
+        <div class="panel-heading">Deploy Docker container</div>
+	    <div class="form-inline panel-body" >
+		    <div class="form-group"><input class="form-control" ng-model="container.image" name="image" placeholder="Image name"/></div>
+			<div class="form-group">
+			    <input class="form-control" ng-model="bind" placeholder="Port to bind" type="number" ng-keyup="$event.which == 13? addPort() : ''"/>
+			    <button class="btn btn-default" ng-click="addPort()">Bind Port</button>
+			</div><br ng-if="container.ports.length"/>
+			<div class="form-group" style="padding-left:50px;">
+			    <div ng-repeat="(i,port) in container.ports">
+			    {{port['in']}} -> <input class="form-control" type="number" ng-model="port.out" />
+			    <select class="form-control" ng-model="port.protocol" ng-options="o as o for o in ['tcp','udp']">
+			    </select>
+			    <i class="fa fa-trash" ng-click="container.ports.splice(i,1)"></i>
+			    </div>
+			</div><br  />
+		    <button class="btn btn-success" ng-click="createContainer()" ng-if="!creatingContainer">Create container</button>
+	    </div>
+    </div>
     @vapp.vms.map(displayVm)
 }

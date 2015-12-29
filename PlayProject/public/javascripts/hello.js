@@ -12,12 +12,27 @@ var Alert = function(type = "info", text = "", active = true){
 app.controller("MainController",function($scope){
 	$scope.alert = new Alert(null,null,false);
 	
+	$scope.container = {};
+	$scope.container.image = "";
+	$scope.container.ports = [];
+	
+	$scope.reload = function(){
+		window.location.reload();
+	}
+	
+	$scope.addPort = function(){
+		if($scope.bind === parseInt($scope.bind, 10)){
+			$scope.container.ports.push({"in" : $scope.bind, protocol : 'tcp', out : $scope.bind});
+			$scope.bind = "";
+		}
+	}
+	
 	$scope.createContainer = function(){
 		$scope.creatingContainer = true;
 		$scope.alert = new Alert("info","Creating container")
 		var socket = new WebSocket("ws://127.0.0.1:9000/container/create");
 		socket.onopen = function (event) {
-			  socket.send('{"image" : "'+$scope.image+'"}'); 
+			  socket.send(JSON.stringify($scope.container)); 
 		};
 		socket.onmessage = function (event) {
 			var data = JSON.parse(event.data);
