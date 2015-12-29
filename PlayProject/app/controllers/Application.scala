@@ -1,26 +1,20 @@
 package controllers
 
 import javax.inject.Inject
-import actors.{DeployVMActor, VMDeployed}
+
+import actors.{Delete, DeleteActor, DeployVMActor}
 import akka.actor.{ActorSystem, Props}
-import models.Vapp
+import models.{Container, Vapp, VappFactory, Vm}
 import play.api.Play.current
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.libs.json.{Json, Writes}
 import play.api.libs.ws._
 import play.api.mvc._
+
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
+import scala.sys.process.Process
 import scala.util.{Failure, Success}
-import models.Vapp
-import models.VappFactory
-import actors.Delete
-import actors.DeleteActor
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import actors.ContainersActor
-import play.api.libs.json.Writes
-import models.Vapp
-import play.api.libs.json.Json
-import models.Vm
-import models.Container
 
 
 
@@ -140,6 +134,12 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
   }
 
 
+  def installSwarm(vm : Vm) = Action {
+    implicit request => {
+      Process(Seq("ssh", "root@"+vm.ipExternal, "mkdir", "foo bar")).!
+      Ok("toto")
+    }
+  }
   
   
   
