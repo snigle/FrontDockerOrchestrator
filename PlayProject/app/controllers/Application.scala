@@ -113,16 +113,16 @@ class Application @Inject() (ws: WSClient) extends Controller {
 
   def process_deleteVM(cookie: String,id_vm : String): Unit = {
 
-    WS.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-" + id_vm + "/power/action/suspend").withHeaders(
+    WS.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-" + id_vm + "/power/action/powerOff").withHeaders(
       "Cookie" -> cookie,
       "Accept" -> "application/*+xml;version=1.5"
     ).post("")
 
 
-    WS.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-" + id_vm).withHeaders(
-      "Cookie" -> cookie,
-      "Accept" -> "application/*+xml;version=1.5"
-    ).delete
+//    WS.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-" + id_vm).withHeaders(
+//      "Cookie" -> cookie,
+//      "Accept" -> "application/*+xml;version=1.5"
+//    ).delete
   }
 
   def process_copie(cookie : String, source_vm : String, name_new_vm : String) {
