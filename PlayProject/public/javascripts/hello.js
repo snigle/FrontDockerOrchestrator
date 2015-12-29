@@ -4,10 +4,10 @@ if (window.console) {
 
 var app = angular.module("vapp",[]);
 
-var Alert = function(type = "info", text = "", active = true){
-	this.type = type;
-	this.text = text;
-	this.active = active;
+var Alert = function(type, text, active){
+	this.type = type != undefined ? type : "info";
+	this.text = text != undefined ? text : "";
+	this.active = active != undefined ? active : true;
 }
 app.controller("MainController",function($scope){
 	$scope.alert = new Alert(null,null,false);
