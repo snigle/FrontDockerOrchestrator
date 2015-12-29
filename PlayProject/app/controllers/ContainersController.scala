@@ -17,8 +17,14 @@ import actors.ContainersActor
 import play.api.Play.current
 import actors.CreateContainer
 import play.api.mvc.WebSocket.FrameFormatter
+import scala.collection.immutable.Map
+import actors.Port
 
 class ContainersController @Inject() (ws: WSClient, system: ActorSystem) extends Controller {  
+  
+  
+  implicit val PortFormat = Json.format[Port]
+  implicit val PortFormatter = FrameFormatter.jsonFrame[Port]
   
   implicit val CreateContainerFormat = Json.format[CreateContainer]
   implicit val CreateContainerFormatter = FrameFormatter.jsonFrame[CreateContainer]
