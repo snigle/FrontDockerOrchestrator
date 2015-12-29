@@ -6,12 +6,13 @@ import models.{Task, TaskFactory, VappFactory, Vm}
 import play.api.Play.current
 import play.api.libs.json.Json
 import play.api.libs.ws.{WS, WSClient, WSResponse}
-
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 import scala.sys.process._
+import play.api.Play.current
+import play.api.Mode
 
 /**
  * Created by eisti on 12/2/15.
@@ -136,11 +137,15 @@ class DeployVMActor(override val out: ActorRef, override val ws: WSClient, overr
       waitTask(PowerOn(vm, updateTask(task)), "Starting the Virtual machine, please wait", () => {
         out ! response_json("info", "Installing swarm on the agent : it can take several minutes")
         val vm_updated = getVapp.vms.filter(v => v.id == vm.id).head
-        ("ssh -i conf/server_key root@192.168.30.52 docker-machine rm "+vm.name).!
+        val prefix = current.mode match {
+          case Mode.Dev => "ssh -i conf/server_key root@192.168.30.52 "
+          case Mode.Prod => ""
+        }
+        (prefix+"docker-machine rm "+vm.name).!
         println("ok remove")
-        val req = "ssh -i conf/server_key root@192.168.30.52 docker-machine create -d generic --generic-ip-address " + vm_updated.ipLocal + " --swarm --swarm-discovery=\"consul://192.168.2.103:8500\" " + vm.name
+        val req = prefix+"docker-machine create -d generic --generic-ip-address " + vm_updated.ipLocal + " --swarm --swarm-discovery=\"consul://192.168.2.103:8500\" " + vm.name
         println(req)
-        val installSwarm_cmd = req.!!
+        val installSwarm_cmd = req.!
         out ! response_json("success", "Machine has been created")
       })
     }

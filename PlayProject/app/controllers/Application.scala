@@ -17,6 +17,7 @@ import scala.sys.process._
 import actors.Init
 import play.api.mvc.WebSocket.FrameFormatter
 
+
 class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controller {
 
   def index = Action.async {
@@ -38,7 +39,6 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
 
   def dashboard = Action.async { implicit request =>
     {
-
       /*implicit val timeout = Timeout(Duration(60,SECONDS))
        val result = Await.result(vm_deploy_actor ? VMDeployed("swarm-agent-" + (4)),timeout.duration).asInstanceOf[String]
        println(result)*/
@@ -84,14 +84,6 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
   def deleteVM = WebSocket.acceptWithActor[Init, String] { request =>
     out =>
       DeleteActor.props(out, ws, reqXml, getCookie)
-  }
-
-  def installSwarm(ip_vm: String) = Action {
-    implicit request =>
-      {
-        var test_cmd = ("ssh -i conf/server_key root@" + ip_vm + " docker-machine create -d generic --generic-ip-address 192.168.2.101 --swarm --swarm-discovery=\"consul://192.168.2.103:8500\" swarm-agent-1").!!
-        Ok(test_cmd)
-      }
   }
 
   def getVapp = Action.async {
