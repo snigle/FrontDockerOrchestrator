@@ -111,7 +111,7 @@ class DeployVMActor(override val out: ActorRef, override val ws: WSClient, overr
       out ! response_json("info", "Creating new VM")
       func().map(response => {
         val vapp = VappFactory(response.xml)
-        reqCopieVm(cookie(), "https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-bb168665-8203-4edc-9ff8-dab64e754620", "swarm-agent-" + (vapp.indice + 1))
+        reqCopieVm(cookie(), "https://vcloud-director-http-2.ccr.eisti.fr/api/vAppTemplate/vm-e640f655-30e5-44cf-9f03-4a4318dc6766", "swarm-agent-" + (vapp.indice + 1))
         out ! response_json("info", "Creating new VM")
       })
     }
@@ -135,7 +135,12 @@ class DeployVMActor(override val out: ActorRef, override val ws: WSClient, overr
     case PowerOn(vm, task) => {
       waitTask(PowerOn(vm, updateTask(task)), "Starting the Virtual machine, please wait", () => {
         out ! response_json("info", "Installing swarm on the agent : it can take several minutes")
-        var installSwarm_cmd = ("ssh -i conf/server_key root@192.168.30.52 docker-machine create -d generic --generic-ip-address " + vm.ipLocal + "--swarm --swarm-discovery=\"consul://192.168.2.103:8500\" " + vm.name).!!
+        val vm_updated = getVapp.vms.filter(v => v.id == vm.id).head
+        ("ssh -i conf/server_key root@192.168.30.52 docker-machine rm "+vm.name).!
+        println("ok remove")
+        val req = "ssh -i conf/server_key root@192.168.30.52 docker-machine create -d generic --generic-ip-address " + vm_updated.ipLocal + " --swarm --swarm-discovery=\"consul://192.168.2.103:8500\" " + vm.name
+        println(req)
+        val installSwarm_cmd = req.!!
         out ! response_json("success", "Machine has been created")
       })
     }

@@ -32,7 +32,7 @@ class ContainersActor(out: ActorRef, ws: WSClient) extends Actor {
                 Map(
                   "info" -> Json.toJson("Creating container for image "+image)
                 )
-              )
+              ).toString()
       println("CreateContainer Ok");
       println(ports);
       println(image);
