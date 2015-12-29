@@ -1,21 +1,56 @@
 @(vapp: Vapp)
 
+@displayContainer(container : Container) = {
+    
+    <tr class="@if(container.active){success}else{danger}">
+        <td>@container.id</td>
+        <td>@container.name</td>
+        <td>@container.image</td>
+        <td>@container.ports.mkString(", ")</td>
+        <td><a class="btn btn-@if(container.active){danger}else{success}"
+            href="@if(container.active){@routes.ContainersController.stop(container.id)}else{@routes.ContainersController.start(container.id)}">
+            @if(container.active){stop}else{start}
+            </a>
+            @if(!container.active){
+            <a class="btn btn-danger" href="@routes.ContainersController.delete(container.id)">X</a>
+            }
+        </td>
+    </tr>
+    
+}
 
 
 @displayVm(vm : Vm) = {
-    <fieldset style="border-color:@if(vm.active){green}else{red}">
-    <legend>@vm.name (@vm.id)</legend>
-    <ul>
-        <li>Ip locale : @vm.ipLocal</li>
-        <li>Ip externe : @vm.ipExternal</li>
-        <a href="http://localhost:9000/deleteVM/@vm.id" > <input type="button" value="Delete"/>  </a>
-    </ul>
-    </fieldset>
+    <div class="panel panel-@if(vm.active){success}else{danger}">
+    <div class="panel-heading">@vm.name (@vm.id) <a href="http://localhost:9000/deleteVM/@vm.id" > <input class="btn btn-danger" type="button" value="Delete VM"/>  </a></div>
+	<div class="panel-body">
+	    <ul>
+	    <li>Ip locale : @vm.ipLocal</li>
+	    <li>Ip externe : @vm.ipExternal</li>
+	    
+	    </ul>
+	    @if(!vm.containers.filter(container => !container.image.contains("swarm")).isEmpty){    
+	    <table class="table">
+	        <tr><th>Id</th><th>Name</th><th>Image</th><th>Ports</th><th>Action</th></tr>
+	        @vm.containers.filter(container => !container.image.contains("swarm")).map(displayContainer)
+	    </table>
+	    }
+	</div>
+    </div>
 }
 
 @main("Dashboad Docker Orchestrator VMWare") {
+    <div class="alert alert-{{alert.type}}" role="alert" ng-if="alert.active">
+    <button type="button" class="close" ng-if="alert.type!='info'" ng-click="alert.active = false" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    {{alert.text}}</div>
+    <h1>Vapp - #@vapp.id - last id : @vapp.indice <button ng-click="copieVM()" class="btn btn-success">Add a VM</button></h1>
+    <input ng-model="image" name="image" placeholder="Image name"/><button ng-click="createContainer()" ng-if="!creatingContainer">Create container</button>
+    <button ng-click="test()">test</button>
+    <!--  <form method="post" action="@routes.ContainersController.create">
+    <input id="form_params" name="image" placeholder="Image name"/>
+    <button type="submit">Create container</button>
+    </form>
+    -->
     
-    <h1>Vapp - #@vapp.id - last id : @vapp.indice</h1>
-    <a href="http://localhost:9000/copieVM" > <input type="button" value="Create a VM"/>  </a>
     @vapp.vms.map(displayVm)
 }
