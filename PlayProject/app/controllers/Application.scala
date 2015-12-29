@@ -15,6 +15,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.sys.process.Process
 import scala.util.{Failure, Success}
+import scala.sys.process._
 
 
 
@@ -134,10 +135,10 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
   }
 
 
-  def installSwarm(vm : Vm) = Action {
+  def installSwarm(ip_vm : String) = Action {
     implicit request => {
-      Process(Seq("ssh", "root@"+vm.ipExternal, "mkdir", "foo bar")).!
-      Ok("toto")
+      var test_cmd = Seq("ssh -i /home/eisti/Documents/ING3/Semestre 1/VMWARE/FrontDockerOrchestrator/PlayProject/conf/server_key", "root@"+ip_vm).!
+      Redirect("/dashboard")
     }
   }
   
