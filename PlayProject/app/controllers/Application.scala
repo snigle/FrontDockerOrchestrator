@@ -137,8 +137,8 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
 
   def installSwarm(ip_vm : String) = Action {
     implicit request => {
-      var test_cmd = Seq("ssh -i /home/eisti/Documents/ING3/Semestre 1/VMWARE/FrontDockerOrchestrator/PlayProject/conf/server_key", "root@"+ip_vm).!
-      Redirect("/dashboard")
+      var test_cmd = ("ssh -i conf/server_key root@"+ip_vm+" docker-machine create -d generic --generic-ip-address 192.168.2.101 --swarm --swarm-discovery=\"consul://192.168.2.103:8500\" swarm-agent-1").!!
+      Ok(test_cmd)
     }
   }
   
@@ -147,11 +147,11 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
   def getVapp = Action.async { 
     implicit request =>
     {
-       val vapp : Future[Vapp] = for{
-         repXML <- reqXml()
-         repJson <- reqJson
-       }yield (VappFactory(repXML.xml, Some(repJson.json)))
-        vapp.map { vapp => Ok(Json.toJson(vapp)) }
+      val vapp : Future[Vapp] = for{
+        repXML <- reqXml()
+        repJson <- reqJson
+      }yield (VappFactory(repXML.xml, Some(repJson.json)))
+      vapp.map { vapp => Ok(Json.toJson(vapp)) }
     }
   }
   
