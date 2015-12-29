@@ -6,7 +6,7 @@
 GET    /                      controllers.Application.index
 GET    /dashboard             controllers.Application.dashboard
 GET    /copieVM               controllers.Application.newVM
-GET    /deleteVM/:id          controllers.Application.deleteVM_action(id)
+GET    /deleteVM          controllers.Application.deleteVM
 GET    /xml                   controllers.Application.vappXml
 GET    /container/start/:id   controllers.ContainersController.start(id)
 GET    /container/stop/:id    controllers.ContainersController.stop(id)

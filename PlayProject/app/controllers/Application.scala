@@ -1,7 +1,6 @@
 package controllers
 
 import javax.inject.Inject
-
 import actors.{Delete, DeleteActor, DeployVMActor}
 import akka.actor.{ActorSystem, Props}
 import models.{Container, Vapp, VappFactory, Vm}
@@ -10,12 +9,13 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.{Json, Writes}
 import play.api.libs.ws._
 import play.api.mvc._
-
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.sys.process.Process
 import scala.util.{Failure, Success}
 import scala.sys.process._
+import actors.Init
+import play.api.mvc.WebSocket.FrameFormatter
 
 
 
@@ -27,7 +27,7 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
   
 //  var cookie: Seq[WSCookie] = Seq[WSCookie]()
 //  val vm_deploy_actor =  system.actorOf(Props(new DeployActor(reqXml,getCookie)))
-   val vm_delete_actor =  system.actorOf(Props(new DeleteActor(ws,reqXml,getCookie)))
+//   val vm_delete_actor =  system.actorOf(Props(new DeleteActor(ws,reqXml,getCookie)))
 
 
 
@@ -114,31 +114,19 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
     DeployVMActor.props(out, ws, reqXml, getCookie)
   }
   
-  def deleteVM_action(id_vm : String) = Action.async {
-    val cookie = getCookie()
-    
-    //PowerOff
-    val data = <UndeployVAppParams xmlns="http://www.vmware.com/vcloud/v1.5">
-    <UndeployPowerAction>powerOff</UndeployPowerAction>
-</UndeployVAppParams>
-          
-    ws.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-" + id_vm +"/action/undeploy").withHeaders(
-    "Cookie" -> cookie,
-    "Accept" -> "application/*+xml;version=1.5",
-    "Content-Type" -> "application/vnd.vmware.vcloud.undeployVAppParams+xml"
-  ).post(data).map( response => {
-      vm_delete_actor ! Delete(id_vm)
-      Redirect("/dashboard").withSession(("delete",id_vm))
-    })
-        
-    
+  
+  implicit val InitFormat = Json.format[Init]
+  implicit val InitFormatter = FrameFormatter.jsonFrame[Init]
+  def deleteVM = WebSocket.acceptWithActor[Init, String] { request => out =>
+    DeleteActor.props(out, ws, reqXml, getCookie)
   }
 
 
   def installSwarm(ip_vm : String) = Action {
     implicit request => {
-      var test_cmd = Seq("ssh -i /home/eisti/Documents/ING3/Semestre 1/VMWARE/FrontDockerOrchestrator/PlayProject/conf/server_key", "root@"+ip_vm).!
-      Redirect("/dashboard")
+      val test_cmd = "ssh -i conf/server_key root@192.168.30.52 echo toto".!!
+      test_cmd.foreach(println _)
+      Ok("toto")
     }
   }
   

@@ -17,7 +17,7 @@ import scala.util.{Failure, Success}
  */
 
 sealed trait DeployType
-class DeployMessageType(val task: Task)
+
 case class IPChanged(vm: Vm, override val task: Task) extends DeployMessageType(task)
 case class ChangeHostname(vm: Vm, override val task: Task) extends DeployMessageType(task)
 case class VMDeployed(name: String, override val task: Task) extends DeployMessageType(task)
@@ -29,13 +29,8 @@ object DeployVMActor {
 }
 
 
-class DeployVMActor(out: ActorRef, ws: WSClient, func: () => Future[WSResponse], cookie: () => String) extends Actor with ActorLogging {
+class DeployVMActor(override val out: ActorRef, override val ws: WSClient, override val func: () => Future[WSResponse], override val cookie: () => String) extends VappActor(out,ws,func,cookie) with ActorLogging {
 
-  //println("testt")
-
-  def response_json(status: String, message: String) = {
-    Json.toJson(Map(status -> message)).toString()
-  }
   def reqCopieVm(cookie: String, source_vm: String, name_new_vm: String) = {
     val vm_copy_xml = <RecomposeVAppParams xmlns="http://www.vmware.com/vcloud/v1.5" xmlns:ns2="http://schemas.dmtf.org/ovf/envelope/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" xmlns:environment_1="http://schemas.dmtf.org/ovf/environment/1">
                         <Description> "api deployed vm to ol-vapp-04" </Description>
@@ -52,8 +47,6 @@ class DeployVMActor(out: ActorRef, ws: WSClient, func: () => Future[WSResponse],
         println("Req creation ok")
         //println(response.xml)
         val task = TaskFactory(response.xml)
-        println(task)
-        println("ok task toto")
         self ! VMDeployed(name_new_vm, task)
       })
 
@@ -78,8 +71,6 @@ class DeployVMActor(out: ActorRef, ws: WSClient, func: () => Future[WSResponse],
           println("reqUpdateIP ok")
           println(response.xml)
           val task = TaskFactory(response.xml)
-          println(task)
-          println("ok task")
           self ! IPChanged(vm_created, task)
         })
   }
@@ -98,10 +89,7 @@ class DeployVMActor(out: ActorRef, ws: WSClient, func: () => Future[WSResponse],
       "Content-Type" -> "application/vnd.vmware.vcloud.guestCustomizationSection+xml").put(changeHostname_xml).map(response =>
         {
           println("reqUpdateIP ok")
-          println(response.xml)
           val task = TaskFactory(response.xml)
-          println(task)
-          println("ok task")
           self ! ChangeHostname(vm, task)
         })
   }
@@ -114,28 +102,19 @@ class DeployVMActor(out: ActorRef, ws: WSClient, func: () => Future[WSResponse],
       })
   }
 
-  def waitTask(m: DeployMessageType, waitingMessage: String, success: () => Unit) = {
-    if (m.task.status == "queued" || m.task.status == "running") {
-      out ! response_json("info", waitingMessage)
-      context.system.scheduler.scheduleOnce(5 seconds, self, m)
-    } else if (m.task.status == "success") {
-      success()
-    } else {
-      println("Close socket")
-      out ! response_json("error", m.task.message)
-      self ! PoisonPill
-    }
-  }
+  
+  
 
   def receive = LoggingReceive {
-    case "start" => {
+    case "\"start\"" => {
+      out ! response_json("info", "Creating new VM")
       func().map(response => {
         val vapp = VappFactory(response.xml)
         reqCopieVm(cookie(), "https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-bb168665-8203-4edc-9ff8-dab64e754620", "swarm-agent-" + (vapp.indice + 1))
         out ! response_json("info", "Creating new VM")
       })
     }
-
+    
 
     case ChangeHostname(vm, task) => {
       waitTask(ChangeHostname(vm, updateTask(task)), "Changing hostname of the Virtual machine, please wait", () => {
@@ -164,40 +143,14 @@ class DeployVMActor(out: ActorRef, ws: WSClient, func: () => Future[WSResponse],
       })
 
     }
+    
 
   }
 
-  def updateTask(task: Task) = {
-
-    if (task.id != "undefined") {
-      val req =
-        WS.url("https://vcloud-director-http-2.ccr.eisti.fr/api/task/" + task.id).withHeaders(
-          "Cookie" -> cookie(),
-          "Accept" -> "application/*+xml;version=1.5").get.map(response =>
-            {
-              TaskFactory(response.xml)
-            })
-      Await.ready(req, 10 seconds).value.get match {
-        case Success(x) => x
-        case Failure(x) => throw new Exception("Can't parse the task")
-      }
-    } else {
-      task
-    }
-  }
+  
 
 
-  def getVapp = {
-    val req =
-      func().map(response =>
-        {
-          VappFactory(response.xml)
-        })
-    Await.ready(req, 10 seconds).value.get match {
-      case Success(x) => x
-      case Failure(x) => throw new Exception("Can't parse the VApp")
-    }
-  }
+  
 
 }
   

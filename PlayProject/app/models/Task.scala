@@ -11,7 +11,6 @@ case class Task(id : String, status : String, message : String = "") {
 object TaskFactory {
 
   def apply(xml : Elem) : Task = {
-    println(xml.head.label)
     xml.head.label match {
       case "Error" => Task("undefined","error",xml.head.attribute("message").get.text)
       case "Task" => Task(xml.head.attribute("id").get.text.split(":").last,

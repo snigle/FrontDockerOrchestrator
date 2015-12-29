@@ -7,32 +7,73 @@ import scala.concurrent.Future
 import play.api.libs.ws.WSResponse
 import scala.concurrent.ExecutionContext.Implicits._
 import models.VappFactory
-import scala.concurrent.duration._ 
+import scala.concurrent.duration._
+import akka.actor.ActorRef
+import akka.actor.Props
+import akka.actor.ActorLogging
+import models.TaskFactory
+import models.Task
 
-case class Delete(vm_id : String, count : Int = 10)
+trait DeleteMessage
+case class Delete(vm_id: String, override val task: Task) extends DeployMessageType(task)
+case class PowerOff(vm_id: String, override val task: Task) extends DeployMessageType(task)
+case class Init(vm_id: String) extends DeleteMessage
 
-class DeleteActor (ws: WSClient, func: () => Future[WSResponse], cookie : () => String) extends Actor{
-  
-  def receive = {
-    case Delete(vm_id, count) => {
-      func().map(response => {
-        val vapp = VappFactory(response.xml)
-        if(count < 0 ){
-          println("Delete Time out : VM not shutdown")
-        }
-        else if(vapp.vms.filter(_.id==vm_id).head.active){
-          println("Vm not powerOff yet, trying again")
-          context.system.scheduler.scheduleOnce(2 seconds, self ,Delete(vm_id,count-1))
-        }
-        else{
-           ws.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-" + vm_id).withHeaders(
-          "Cookie" -> cookie(),
-          "Accept" -> "application/*+xml;version=1.5"
-        ).delete
-        println("Deleting VM")
-        }
-    })
-    }
+object DeleteActor {
+  def props(out: ActorRef, ws: WSClient, func: () => Future[WSResponse], cookie: () => String) = Props(new DeleteActor(out, ws, func, cookie))
+}
+
+class DeleteActor(override val out: ActorRef, override val ws: WSClient, func: () => Future[WSResponse], override val cookie: () => String) extends VappActor(out, ws, func, cookie) with ActorLogging {
+
+  def reqDelete(vm_id: String) {
+    out ! response_json("info", "Deleting VM")
+    ws.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-" + vm_id).withHeaders(
+      "Cookie" -> cookie(),
+      "Accept" -> "application/*+xml;version=1.5").delete.map(response =>
+        {
+          println("reqDelete ok")
+          println(response.xml)
+          val task = TaskFactory(response.xml)
+          self ! Delete(vm_id, task)
+        })
   }
-  
+
+  def receive = {
+
+    case Init(vm_id) => {
+      out ! response_json("info", "Deleting VM")
+      val vm = getVapp.vms.filter(vm => vm.id == vm_id).head
+      if (vm.active) {
+        //PowerOff
+        val data = <UndeployVAppParams xmlns="http://www.vmware.com/vcloud/v1.5">
+                     <UndeployPowerAction>powerOff</UndeployPowerAction>
+                   </UndeployVAppParams>
+
+        ws.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-" + vm_id + "/action/undeploy").withHeaders(
+          "Cookie" -> cookie(),
+          "Accept" -> "application/*+xml;version=1.5",
+          "Content-Type" -> "application/vnd.vmware.vcloud.undeployVAppParams+xml").post(data).map(response => {
+            val task = TaskFactory(response.xml)
+            self ! PowerOff(vm_id, task)
+          })
+      } else {
+        reqDelete(vm_id);
+      }
+    }
+
+    case PowerOff(vm_id, task) => {
+      waitTask(PowerOff(vm_id, updateTask(task)), "PowerOff the VM", () => {
+        reqDelete(vm_id)
+      })
+    }
+
+    case Delete(vm_id, task) => {
+      waitTask(Delete(vm_id, updateTask(task)), "Deleting the Vapp", () => {
+        out ! response_json("success", "Machine has deleted")
+      })
+    }
+
+
+  }
+
 }

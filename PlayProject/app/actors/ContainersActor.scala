@@ -28,6 +28,11 @@ class ContainersActor(out: ActorRef, ws: WSClient) extends Actor {
         self ! PoisonPill
       }
     case CreateContainer(image, ports) => {
+      out ! Json.toJson(
+                Map(
+                  "info" -> Json.toJson("Creating container for image "+image)
+                )
+              )
       println("CreateContainer Ok");
       println(ports);
       println(image);
@@ -63,7 +68,7 @@ class ContainersActor(out: ActorRef, ws: WSClient) extends Actor {
             if(response.status==201){
               Json.toJson(
                 Map(
-                  "info" -> Json.toJson("The container has been created with image "+image)
+                  "success" -> Json.toJson("The container has been created with image "+image)
                 )
               )
             }

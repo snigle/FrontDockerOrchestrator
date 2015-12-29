@@ -22,7 +22,7 @@
 
 @displayVm(vm : Vm) = {
     <div class="panel panel-@if(vm.active){success}else{danger}">
-    <div class="panel-heading">@vm.name (@vm.id) @if(vm.name!="mh-keystore" && vm.name!="swarm-master" && vm.name!="Template"){<a href="http://localhost:9000/deleteVM/@vm.id" > <input class="btn btn-danger" type="button" value="Delete VM"/>  </a>}</div>
+    <div class="panel-heading">@vm.name (@vm.id) @if(vm.name!="mh-keystore" && vm.name!="swarm-master" && vm.name!="Template"){<a href="#" ng-if="!deleteVM.value" ng-click="socket('deleteVM',{ vm_id : '@vm.id'},deleteVM)"> <input class="btn btn-danger" type="button" value="Delete VM"/>  </a>}</div>
 	<div class="panel-body">
 	    <ul>
 	    <li>Ip locale : @vm.ipLocal</li>
@@ -48,7 +48,7 @@
     </div>
     
     
-    <h1>Vapp - #@vapp.id - last id : @vapp.indice <button ng-click="copieVM()" class="btn btn-success">Add a VM</button></h1>
+    <h1>Vapp - #@vapp.id - last id : @vapp.indice <button ng-click="socket('copieVM','start',copyingVM)" class="btn btn-success" ng-if="!copyingVM.value">Add a VM</button></h1>
     
     <div class="panel panel-default">
         <div class="panel-heading">Deploy Docker container</div>
@@ -66,7 +66,7 @@
 			    <i class="fa fa-trash" ng-click="container.ports.splice(i,1)"></i>
 			    </div>
 			</div><br  />
-		    <button class="btn btn-success" ng-click="createContainer()" ng-if="!creatingContainer">Create container</button>
+		    <button class="btn btn-success" ng-click="socket('container/create',container,creatingContainer)" ng-if="!creatingContainer.value">Create container</button>
 	    </div>
     </div>
     @vapp.vms.map(displayVm)
