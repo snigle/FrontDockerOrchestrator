@@ -138,14 +138,14 @@ class DeployVMActor(override val out: ActorRef, override val ws: WSClient, overr
         out ! response_json("info", "Installing swarm on the agent : it can take several minutes")
         val vm_updated = getVapp.vms.filter(v => v.id == vm.id).head
         val prefix = current.mode match {
-          case Mode.Dev => "ssh -i conf/server_key root@192.168.30.52 "
+          case Mode.Dev => "ssh -i conf/server_key root@"+current.configuration.getString("vapp.mh-keystore.ip").get
           case Mode.Prod => ""
         }
         (prefix+"docker-machine rm "+vm.name).!
         println("ok remove")
         val req = prefix+"docker-machine create -d generic --generic-ip-address " + vm_updated.ipLocal + " --swarm --swarm-discovery=\"consul://192.168.2.103:8500\" " + vm.name
         println(req)
-        val installSwarm_cmd = req.!
+        val installSwarm_cmd = req ! ProcessLogger(line => out ! response_json("info","Installing Swarm : "+line), line => out ! response_json("error", line) )
         out ! response_json("success", "Machine has been created")
       })
     }

@@ -16,6 +16,7 @@ import scala.util.{ Failure, Success }
 import scala.sys.process._
 import actors.Init
 import play.api.mvc.WebSocket.FrameFormatter
+import play.api.Mode
 
 
 class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controller {
@@ -30,12 +31,15 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
         })
       }
   }
-
-  def reqXml() = ws.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vapp-9dd013e3-3f51-4cde-a19c-f96b4ad2e350/").withHeaders(
+  //Vapp id : 9dd013e3-3f51-4cde-a19c-f96b4ad2e350"
+  def reqXml() = ws.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vapp-"+current.configuration.getString("vapp.id").get).withHeaders(
     "Cookie" -> getCookie(),
     "Accept" -> "application/*+xml;version=1.5").get()
 
-  def reqJson = ws.url("https://192.168.30.53:8080/containers/json?all=1").get
+  def reqJson = current.mode match {
+          case Mode.Dev => ws.url("https://"+current.configuration.getString("vapp.swarm-master.ip").get+":8080/containers/json?all=1").get
+          case Mode.Prod => ws.url("https://192.168.2.100:8080/containers/json?all=1").get
+  }
 
   def dashboard = Action.async { implicit request =>
     {

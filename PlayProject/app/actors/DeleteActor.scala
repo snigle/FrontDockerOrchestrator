@@ -31,8 +31,6 @@ class DeleteActor(override val out: ActorRef, override val ws: WSClient, func: (
       "Cookie" -> cookie(),
       "Accept" -> "application/*+xml;version=1.5").delete.map(response =>
         {
-          println("reqDelete ok")
-          println(response.xml)
           val task = TaskFactory(response.xml)
           self ! Delete(vm_id, task)
         })
@@ -68,7 +66,7 @@ class DeleteActor(override val out: ActorRef, override val ws: WSClient, func: (
     }
 
     case Delete(vm_id, task) => {
-      waitTask(Delete(vm_id, updateTask(task)), "Deleting the Vapp", () => {
+      waitTask(Delete(vm_id, updateTask(task)), "Deleting the VM", () => {
         out ! response_json("success", "Machine has deleted")
       })
     }

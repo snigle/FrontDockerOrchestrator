@@ -28,7 +28,7 @@ abstract class VappActor(val out: ActorRef, val ws: WSClient, val func: () => Fu
   def waitTask(m: DeployMessageType, waitingMessage: String, success: () => Unit) = {
     if (m.task.status == "queued" || m.task.status == "running") {
       out ! response_json("info", waitingMessage)
-      context.system.scheduler.scheduleOnce(5 seconds, self, m)
+      context.system.scheduler.scheduleOnce(2 seconds, self, m)
     } else if (m.task.status == "success") {
       success()
     } else {
