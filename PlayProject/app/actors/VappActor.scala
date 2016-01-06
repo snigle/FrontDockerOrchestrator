@@ -33,7 +33,7 @@ abstract class VappActor(val out: ActorRef, val ws: WSClient, val func: () => Fu
       success()
     } else {
       println("Close socket")
-      out ! response_json("error", m.task.message)
+      out ! response_json("error", ""+m.task.status+" : "+m.task.message)
       self ! PoisonPill
     }
   }

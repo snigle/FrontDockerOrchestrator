@@ -138,7 +138,7 @@ class DeployVMActor(override val out: ActorRef, override val ws: WSClient, overr
         out ! response_json("info", "Installing swarm on the agent : it can take several minutes")
         val vm_updated = getVapp.vms.filter(v => v.id == vm.id).head
         val prefix = current.mode match {
-          case Mode.Dev => "ssh -i conf/server_key root@"+current.configuration.getString("vapp.mh-keystore.ip").get
+          case Mode.Dev => "ssh -i conf/server_key root@"+current.configuration.getString("vapp.mh-keystore.ip").get+" "
           case Mode.Prod => ""
         }
         (prefix+"docker-machine rm "+vm.name).!
