@@ -1,0 +1,11 @@
+#!/bin/bash
+#Auto start : update-rc.d playproject-init defaults
+    echo "Config VM"
+export http_proxy=192.168.254.10:3128
+export https_proxy=192.168.254.10:3128
+    cd /root/play*
+    ./startup.sh
+    echo "Run server"
+    ./bin/playproject -Dhttp.port=80
+exit 0
+
