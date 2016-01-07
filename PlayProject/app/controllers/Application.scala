@@ -22,6 +22,8 @@ import scala.concurrent.duration._
 
 class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controller {
 
+
+
   def index = Action.async {
     implicit request =>
       {
