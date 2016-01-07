@@ -17,6 +17,7 @@ import scala.sys.process._
 import actors.Init
 import play.api.mvc.WebSocket.FrameFormatter
 import play.api.Mode
+import scala.concurrent.duration._
 
 
 class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controller {
@@ -34,11 +35,11 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
   //Vapp id : 9dd013e3-3f51-4cde-a19c-f96b4ad2e350"
   def reqXml() = ws.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vapp-"+current.configuration.getString("vapp.id").get).withHeaders(
     "Cookie" -> getCookie(),
-    "Accept" -> "application/*+xml;version=1.5").get()
+    "Accept" -> "application/*+xml;version=1.5").withRequestTimeout(5000).get()
 
   def reqJson = current.mode match {
-          case Mode.Dev => ws.url("https://"+current.configuration.getString("vapp.swarm-master.ip").get+":8080/containers/json?all=1").get
-          case Mode.Prod => ws.url("https://192.168.2.100:2376/containers/json?all=1").get
+          case Mode.Dev => ws.url("https://"+current.configuration.getString("vapp.swarm-master.ip").get+":8080/containers/json?all=1").withRequestTimeout(5000).get
+          case Mode.Prod => ws.url("https://192.168.2.100:2376/containers/json?all=1").withRequestTimeout(5000).get
   }
 
   def dashboard = Action.async { implicit request =>
@@ -72,7 +73,7 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
             response.cookies
           }
       }
-    Await.ready(req, Duration.Inf).value.get match {
+    Await.ready(req,Duration(10000, MILLISECONDS)).value.get match {
       case Success(x) => x.head.toString
       case Failure(x) => throw new Exception(x.getMessage)
     }
