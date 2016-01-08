@@ -9,14 +9,31 @@ import play.api.libs.ws.WSClient
 import scala.collection.immutable.Map
 import scala.concurrent.ExecutionContext.Implicits._
 
-
+/*
+* Classe Port used to bind container port
+* in : VM's port opened
+* out : port used by the container
+*/
 case class Port(in : Int, protocol : String, out : Int)
+
+/*
+* Classe CreateContainer : represents the container to deploy on a VM
+* image : name of the image to deploy from dockerhub
+*  ports : ports used by the image
+*/
 case class CreateContainer(image : String, ports : Seq[Port])
 
+/*
+* Object used by websockets
+*/
 object ContainersActor {
   def props(out: ActorRef, ws: WSClient) = Props(new ContainersActor(out, ws))
 }
 
+
+/*
+* Actor used to send a container to swarm master to deploy the container
+*/
 class ContainersActor(out: ActorRef, ws: WSClient) extends Actor {
   def receive = {
     case msg: String => {
@@ -61,6 +78,8 @@ class ContainersActor(out: ActorRef, ws: WSClient) extends Actor {
   	      
   	   }
       """)
+
+          //Remote or local ip depending of the launch configuration of the server
           val swarmMaster = current.mode match {
             case Mode.Dev => current.configuration.getString("vapp.swarm-master.ip").get+":8080"
             case Mode.Prod => "192.168.2.100:3376"

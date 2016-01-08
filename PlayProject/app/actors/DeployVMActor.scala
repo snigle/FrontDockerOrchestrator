@@ -17,19 +17,29 @@ import scala.sys.process._
 
 sealed trait DeployType
 
+/*
+* Tasks used by websockets
+*/
 case class IPChanged(vm: Vm, override val task: Task) extends DeployMessageType(task)
 case class ChangeHostname(vm: Vm, override val task: Task) extends DeployMessageType(task)
 case class VMDeployed(name: String, override val task: Task) extends DeployMessageType(task)
 case class PowerOn(vm: Vm, override val task: Task) extends DeployMessageType(task)
 case class Message(s: String) extends DeployType
 
+/*
+* Object used by websockets
+*/
 object DeployVMActor {
   def props(out: ActorRef, ws: WSClient, func: () => Future[WSResponse], cookie: () => String) = Props(new DeployVMActor(out, ws, func, cookie))
 }
 
 
+/*
+* Actor used to deploy a VM on the cluster
+*/
 class DeployVMActor(override val out: ActorRef, override val ws: WSClient, override val func: () => Future[WSResponse], override val cookie: () => String) extends VappActor(out,ws,func,cookie) with ActorLogging {
 
+  //Copy the template VM
   def reqCopieVm(cookie: String, source_vm: String, name_new_vm: String) = {
     val vm_copy_xml = <RecomposeVAppParams xmlns="http://www.vmware.com/vcloud/v1.5" xmlns:ns2="http://schemas.dmtf.org/ovf/envelope/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" xmlns:environment_1="http://schemas.dmtf.org/ovf/environment/1">
                         <Description> "api deployed vm to ol-vapp-04" </Description>
