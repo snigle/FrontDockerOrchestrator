@@ -1,18 +1,15 @@
 package actors
 
-import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
+import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.event.LoggingReceive
 import models.{Task, TaskFactory, VappFactory, Vm}
-import play.api.Play.current
-import play.api.libs.json.Json
-import play.api.libs.ws.{WS, WSClient, WSResponse}
-import scala.concurrent.ExecutionContext.Implicits._
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
-import scala.util.{Failure, Success}
-import scala.sys.process._
-import play.api.Play.current
 import play.api.Mode
+import play.api.Play.current
+import play.api.libs.ws.{WS, WSClient, WSResponse}
+
+import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.Future
+import scala.sys.process._
 
 /**
  * Created by eisti on 12/2/15.
@@ -42,7 +39,7 @@ class DeployVMActor(override val out: ActorRef, override val ws: WSClient, overr
                         <AllEULAsAccepted>true</AllEULAsAccepted>
                       </RecomposeVAppParams>
 
-    WS.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vapp-9dd013e3-3f51-4cde-a19c-f96b4ad2e350/action/recomposeVApp").withHeaders(
+    WS.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vapp-" + current.configuration.getString("vapp.id").get + "/action/recomposeVApp").withHeaders(
       "Cookie" -> cookie,
       "Accept" -> "application/*+xml;version=1.5",
       "Content-Type" -> "application/vnd.vmware.vcloud.recomposeVAppParams+xml").post(vm_copy_xml).map(response => {

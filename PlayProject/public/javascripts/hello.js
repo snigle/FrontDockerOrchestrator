@@ -36,7 +36,8 @@ app.controller("MainController",function($scope){
 		active.value = true;
 		console.log("open socket", object);
 		//$scope.alert = new Alert("info","Creating VM")
-		var socket = new WebSocket("ws://127.0.0.1:9000/"+route);
+		console.log(window.location.hostname)
+		var socket = new WebSocket("ws://"+ window.location.hostname +"/"+route);
 		socket.onopen = function (event) {
 			console.log("socket opened")
 			socket.send(JSON.stringify(object)); 

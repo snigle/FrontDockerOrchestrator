@@ -30,7 +30,8 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
         //val cookie = getCookie
         //Future(Ok(cookie))
         reqJson.map(response => {
-          Ok(response.json)
+          //Ok(response.json)
+          Redirect("/dashboard")
         })
       }
   }
@@ -41,7 +42,7 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
 
   def reqJson = current.mode match {
           case Mode.Dev => ws.url("https://"+current.configuration.getString("vapp.swarm-master.ip").get+":8080/containers/json?all=1").withRequestTimeout(5000).get
-          case Mode.Prod => ws.url("https://192.168.2.100:2376/containers/json?all=1").withRequestTimeout(5000).get
+          case Mode.Prod => ws.url("https://192.168.2.100:3376/containers/json?all=1").withRequestTimeout(5000).get
   }
 
   def dashboard = Action.async { implicit request =>
