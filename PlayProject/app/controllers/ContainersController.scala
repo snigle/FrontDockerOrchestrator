@@ -1,24 +1,17 @@
 package controllers
 
-import scala.concurrent.ExecutionContext.Implicits._
 import javax.inject.Inject
-import play.api.libs.ws.WSClient
-import play.api.mvc.Controller
-import play.api.mvc.Action
-import play.mvc.Results.Redirect
-import play.api.data.Form
-import play.api.data.Mapping
-import play.api.libs.json._
-import com.fasterxml.jackson.annotation.JsonValue
+
+import actors.{ContainersActor, CreateContainer, Port}
 import akka.actor.ActorSystem
-import actors.ContainersActor
-import play.api.mvc.WebSocket
-import actors.ContainersActor
+import play.api.Mode
 import play.api.Play.current
-import actors.CreateContainer
+import play.api.libs.json._
+import play.api.libs.ws.WSClient
+import play.api.mvc.{Action, Controller, WebSocket}
 import play.api.mvc.WebSocket.FrameFormatter
-import scala.collection.immutable.Map
-import actors.Port
+
+import scala.concurrent.ExecutionContext.Implicits._
 
 class ContainersController @Inject() (ws: WSClient, system: ActorSystem) extends Controller {  
   
@@ -33,21 +26,24 @@ class ContainersController @Inject() (ws: WSClient, system: ActorSystem) extends
     ContainersActor.props(out, ws)
   }
 
-  
+  val swarmMaster = current.mode match {
+    case Mode.Dev => current.configuration.getString("vapp.swarm-master.ip").get+":8080"
+    case Mode.Prod => "192.168.2.100:3376"
+  }
   def start(id : String) = Action.async {
-    ws.url("https://192.168.30.53:8080/containers/"+id+"/start").post("").map(response =>
+    ws.url("https://"+swarmMaster+"/containers/"+id+"/start").post("").map(response =>
       {
         Redirect(routes.Application.dashboard())
       })
   }
   def stop(id : String) = Action.async {
-    ws.url("https://192.168.30.53:8080/containers/"+id+"/stop").post("").map(response =>
+    ws.url("https://"+swarmMaster+"/containers/"+id+"/stop").post("").map(response =>
       {
         Redirect(routes.Application.dashboard())
       })
   }
   def delete(id : String) = Action.async {
-    ws.url("https://192.168.30.53:8080/containers/"+id).delete.map(response =>
+    ws.url("https://"+swarmMaster+"/containers/"+id).delete.map(response =>
       {
         Redirect(routes.Application.dashboard())
       })
