@@ -3,7 +3,17 @@ package models
 import scala.xml.Node
 import play.api.libs.json._
 
-case class Vm (id : String, name : String, ipLocal : String, ipExternal : String, active : Boolean = false, containers : Seq[Container] = Nil) {
+/*
+ * VM representation
+ */
+case class Vm (
+    id : String,
+    name : String,
+    ipLocal : String, //Ip inside the local NAT network
+    ipExternal : String, //Ip of the organization network
+    active : Boolean = false, //True if the VM is powered on
+    containers : Seq[Container] = Nil //Running containers
+    ) {
   
 }
 

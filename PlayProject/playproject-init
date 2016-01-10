@@ -3,10 +3,9 @@
     echo "Config VM"
     export http_proxy=192.168.254.10:3128
     export https_proxy=192.168.254.10:3128
-    cd /root/play*
-    ./startup.sh
+    /root/play/startup.sh
     echo "Run server"
     rm RUNNING_PID
-    ./bin/playproject -Dhttp.proxyHost=192.168.254.10 -Dhttp.proxyPort=3128 -Dhttp.nonProxyHosts="localhost|127.0.0.1|192.168.2.100|192.168.2.101|192.168.2.2|192.168.2.103|192.168.2.104|192.168.2.105|192.168.2.106|192.168.2.107|192.168.2.108|192.168.2.194|192.168.2.110" -Dhttp.port=80
+    /root/play/bin/playproject -Dhttp.proxyHost=192.168.254.10 -Dhttp.proxyPort=3128 -Dhttp.nonProxyHosts="localhost|127.0.0.1|192.168.2.100|192.168.2.101|192.168.2.2|192.168.2.103|192.168.2.104|192.168.2.105|192.168.2.106|192.168.2.107|192.168.2.108|192.168.2.194|192.168.2.110" -Dhttp.port=80
 exit 0
 

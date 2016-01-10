@@ -9,7 +9,7 @@ curl -s -k -c loginCookie.txt -H "Accept: application/*+xml;version=5.1" --user 
 
 #curl -s -k -b loginCookie.txt -H "Accept:application/*+xml;version=1.5" -X GET "https://vcloud-director-http-2.ccr.eisti.fr/api/query?type=vm&fields=name&filter=(status==POWERED_ON;isVAppTemplate==false)"
 # Get id of the mh-keystore
-reqVM=`curl -s -k -b loginCookie.txt -H "Accept:application/*+xml;version=1.5" -X GET "https://vcloud-director-http-2.ccr.eisti.fr/api/query?type=vm&fields=name&filter=(status==POWERED_ON;isVAppTemplate==false)" | grep $nomVM -m 1 | cut -d '"' -f4`
+reqVM=`curl -s -k -b loginCookie.txt -H "Accept:application/*+xml;version=1.5" -X GET "https://vcloud-director-http-2.ccr.eisti.fr/api/query?type=vm&fields=name&filter=(status==POWERED_ON;isVAppTemplate==false)" | grep $nomVM | cut -d '"' -f4`
 
 echo "Find VM : $reqVM"
 

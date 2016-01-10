@@ -3,6 +3,10 @@ package models
 import scala.xml.Elem
 import play.api.libs.json.JsValue
 
+/*
+ * VApp representation
+ * indice : last indice of created VM for exemple if last vm created is swarm-agent-3, indice = 3
+ */
 case class Vapp(id : String, vms : Seq[Vm], indice : Int) {
   
 	
