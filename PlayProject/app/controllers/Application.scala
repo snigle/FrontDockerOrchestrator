@@ -1,23 +1,21 @@
 package controllers
 
 import javax.inject.Inject
-import actors.{ Delete, DeleteActor, DeployVMActor }
-import akka.actor.{ ActorSystem, Props }
-import models.{ Container, Vapp, VappFactory, Vm }
+
+import actors.{DeleteActor, DeployVMActor, Init}
+import akka.actor.ActorSystem
+import models.{Vapp, VappFactory}
+import play.api.Mode
 import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.libs.json.{ Json, Writes }
+import play.api.libs.json.Json
 import play.api.libs.ws._
-import play.api.mvc._
-import scala.concurrent.duration.Duration
-import scala.concurrent.{ Await, Future }
-import scala.sys.process.Process
-import scala.util.{ Failure, Success }
-import scala.sys.process._
-import actors.Init
 import play.api.mvc.WebSocket.FrameFormatter
-import play.api.Mode
-import scala.concurrent.duration._
+import play.api.mvc._
+
+import scala.concurrent.duration.{Duration, _}
+import scala.concurrent.{Await, Future}
+import scala.util.{Failure, Success}
 
 class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controller {
 
@@ -32,7 +30,7 @@ class Application @Inject() (ws: WSClient, system: ActorSystem) extends Controll
    * Get Json WSResponse from the docker swarm api
    */
   def reqJson = current.mode match {
-    case Mode.Dev  => ws.url("https://" + current.configuration.getString("vapp.swarm-master.ip").get + ":8080/containers/json?all=1").withRequestTimeout(5000).get
+    case Mode.Dev  => ws.url("https://" + current.configuration.getString("vapp.swarm-master.ip").get + ":8080/containers/àjson?all=1").withRequestTimeout(5000).get
     case Mode.Prod => ws.url("https://192.168.2.100:3376/containers/json?all=1").withRequestTimeout(5000).get
   }
 

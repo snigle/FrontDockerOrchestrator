@@ -24,7 +24,8 @@ abstract class VappActor(val out: ActorRef, val ws: WSClient, val func: () => Fu
   def response_json(status: String, message: String) = {
     Json.toJson(Map(status -> message)).toString()
   }
-  
+
+  //Generic tasks handler to display informations to the user
   def waitTask(m: DeployMessageType, waitingMessage: String, success: () => Unit) = {
     if (m.task.status == "queued" || m.task.status == "running") {
       out ! response_json("info", waitingMessage)
@@ -37,9 +38,9 @@ abstract class VappActor(val out: ActorRef, val ws: WSClient, val func: () => Fu
       self ! PoisonPill
     }
   }
-  
-  def updateTask(task: Task) : Task= {
 
+  //Update the state of a running process
+  def updateTask(task: Task) : Task= {
     if (task.id != "undefined") {
       val req =
         ws.url("https://vcloud-director-http-2.ccr.eisti.fr/api/task/" + task.id).withHeaders(
@@ -56,7 +57,8 @@ abstract class VappActor(val out: ActorRef, val ws: WSClient, val func: () => Fu
       task
     }
   }
-  
+
+  //Get all informations on the current Vapp
   def getVapp : Vapp= {
     val req =
       func().map(response =>

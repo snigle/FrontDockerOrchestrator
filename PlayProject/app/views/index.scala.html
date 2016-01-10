@@ -1,7 +1,8 @@
 @(vapp: Vapp)
 
+<!-- Layout used to display swarm agents containers -->
 @displayContainer(container : Container) = {
-    
+
     <tr class="@if(container.active){success}else{danger}">
         <td>@container.id</td>
         <td>@container.name</td>
@@ -20,6 +21,7 @@
 }
 
 
+<!-- Layout used to display swarm agents informations -->
 @displayVm(vm : Vm) = {
     <div class="panel panel-@if(vm.active){success}else{danger}">
     <div class="panel-heading">@vm.name (@vm.id) @if(vm.name!="mh-keystore" && vm.name!="swarm-master" && vm.name!="Template"){<a href="#" ng-if="!deleteVM.value" ng-click="socket('deleteVM',{ vm_id : '@vm.id'},deleteVM)"> <input class="btn btn-danger" type="button" value="Delete VM"/>  </a>}</div>
@@ -39,6 +41,7 @@
     </div>
 }
 
+<!-- General layout for the user interface-->
 @main("Dashboad Docker Orchestrator VMWare") {
     
     <div class="alert alert-{{alert.type}}" role="alert" ng-if="alert.active">

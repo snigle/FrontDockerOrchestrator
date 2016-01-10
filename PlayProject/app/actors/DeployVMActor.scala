@@ -39,7 +39,7 @@ object DeployVMActor {
 */
 class DeployVMActor(override val out: ActorRef, override val ws: WSClient, override val func: () => Future[WSResponse], override val cookie: () => String) extends VappActor(out,ws,func,cookie) with ActorLogging {
 
-  //Copy the template VM
+  //Copy the template VM in order to add a VM in the cluster
   def reqCopieVm(cookie: String, source_vm: String, name_new_vm: String) = {
     val vm_copy_xml = <RecomposeVAppParams xmlns="http://www.vmware.com/vcloud/v1.5" xmlns:ns2="http://schemas.dmtf.org/ovf/envelope/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" xmlns:environment_1="http://schemas.dmtf.org/ovf/environment/1">
                         <Description> "api deployed vm to ol-vapp-04" </Description>
@@ -61,6 +61,7 @@ class DeployVMActor(override val out: ActorRef, override val ws: WSClient, overr
 
   }
 
+  //Assigns an ip to the last created VM
   def reqUpdateIp(vm_created: Vm) = {
     val updateip_xml = <NetworkConnectionSection xmlns="http://www.vmware.com/vcloud/v1.5" xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1">
                          <ovf:Info>Specifies the available VM network connections</ovf:Info>
@@ -84,6 +85,7 @@ class DeployVMActor(override val out: ActorRef, override val ws: WSClient, overr
         })
   }
 
+  //Change the VM host name
   def reqChangeHostname(vm: Vm) = {
     val changeHostname_xml =
       <GuestCustomizationSection xmlns="http://www.vmware.com/vcloud/v1.5" xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" ovf:required="false">
@@ -103,6 +105,7 @@ class DeployVMActor(override val out: ActorRef, override val ws: WSClient, overr
         })
   }
 
+  //Power on the created VM
   def reqPowerOn(vm: Vm) = {
     WS.url("https://vcloud-director-http-2.ccr.eisti.fr/api/vApp/vm-" + vm.id + "/power/action/powerOn").withHeaders(
       "Cookie" -> cookie(),
@@ -112,8 +115,9 @@ class DeployVMActor(override val out: ActorRef, override val ws: WSClient, overr
   }
 
   
-  
 
+
+  // All tasks used in the creation process
   def receive = LoggingReceive {
     case "\"start\"" => {
       out ! response_json("info", "Creating new VM")
@@ -144,6 +148,7 @@ class DeployVMActor(override val out: ActorRef, override val ws: WSClient, overr
       waitTask(PowerOn(vm, updateTask(task)), "Starting the Virtual machine, please wait", () => {
         out ! response_json("info", "Installing swarm on the agent : it can take several minutes")
         val vm_updated = getVapp.vms.filter(v => v.id == vm.id).head
+        // The application is deployed on the mh-keystore in production, so if we are in dev mode we need to tell where is located the rsa key of the server to install docker swarm
         val prefix = current.mode match {
           case Mode.Dev => "ssh -i conf/server_key root@"+current.configuration.getString("vapp.mh-keystore.ip").get+" "
           case Mode.Prod => ""
@@ -157,7 +162,7 @@ class DeployVMActor(override val out: ActorRef, override val ws: WSClient, overr
       })
     }
 
-
+    //last step in the creation process
     case VMDeployed(name, task) => {
       waitTask(VMDeployed(name, updateTask(task)), "Virtual machine is being deployed, please wait", () => {
         val vapp = getVapp
