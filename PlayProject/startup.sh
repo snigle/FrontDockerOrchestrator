@@ -18,17 +18,17 @@ if [ -n "$reqVM" ]; then
 #curl -s -k -b loginCookie.txt -H "Accept:application/*+xml;version=1.5" -X GET $reqVM
 vappid=`curl -s -k -b loginCookie.txt -H "Accept:application/*+xml;version=1.5" -X GET $reqVM | grep rel=\"up\" | cut -d '"' -f6 | cut -d '/' -f6`
 
-head -n -1 conf/application.conf > temp.txt ; mv temp.txt conf/application.conf
-echo "vapp.id=\"${vappid:5}\"" >> conf/application.conf;
+head -n -1 /root/play/conf/application.conf > temp.txt ; mv temp.txt /root/play/conf/application.conf
+echo "vapp.id=\"${vappid:5}\"" >> /root/play/conf/application.conf;
 
 #Rename the machine
 
 
 data=`curl -s -k -b loginCookie.txt -H "Accept:application/*+xml;version=1.5" -X GET $reqVM`
       
-echo ${data/$nomVM/"mh-keystore"} > conf/temp.xml
+echo ${data/$nomVM/"mh-keystore"} > /root/play/conf/temp.xml
 
-curl -s -k -b loginCookie.txt -H "Accept:application/*+xml;version=1.5" -H "Content-Type:application/vnd.vmware.vcloud.vm+xml" -X PUT "$reqVM" --data @conf/temp.xml
+curl -s -k -b loginCookie.txt -H "Accept:application/*+xml;version=1.5" -H "Content-Type:application/vnd.vmware.vcloud.vm+xml" -X PUT "$reqVM" --data @/root/play/conf/temp.xml
 
-rm conf/temp.xml
+rm /root/play/conf/temp.xml
 fi
